@@ -1,0 +1,13 @@
+
+
+Web10G-userland provides a library and tools for the Web10G project; cf.
+
+http://web10g.org
+
+For installation instructions, see INSTALL.
+
+This work is based on RFC 4898, a copy of which in included here in the file 
+rfc4898.txt The names of all instruments are included in the file 
+KIS-field-names.txt
+
+All material here is based on the NSF supported projects, Web100 and Web10Gig.

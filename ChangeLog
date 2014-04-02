@@ -1,0 +1,47 @@
+
+web10g-userland-2.0.7:
+
+	N.B.  Changed licensing to MIT license.
+
+	As a result of the change of license, the underlying intrusive
+	list structure has been changed from that of glibc (LGPL) to of a
+	version from CCAN (http://ccodearchive.net). This implementation
+	has several benefits, beyond the MIT licensing. It performs several
+	sanity checks when configured with --enable-debug; list_for_each
+	has a more user-friendly interface. As a consequence of the latter,
+	code that had previously used ESTATS_LIST_FOREACH will have to
+	accommodate minor changes; examples of use are given in util/C.
+
+	Added web10g- prefix to utils to distinguish from those similarly
+	named web100 utils, for those uers comparing the two.
+
+	Added missing free(str) following allocation by estats_val_as_string.
+
+	Cleaner output for listconninfo and deltavars.
+	
+web10g-userland-2.0.6.2:
+
+	Added record-to-file read/write functions and data type.
+
+	Added listconninfo structure and functions for associating uid,
+	pid, cmdline, to connection tuple.
+
+	Reverted naming conventions for functions/lib to "estats".
+
+	Added doc/API.txt giving an overview and explication of main lib
+	functions.
+
+	Minor bug fixes.
+
+web10g-userland-2.0.4:
+
+	Fixed reporting of IPv6 addresses in tcpe_list_conns.
+
+	Added tcpe_write_var function and example client (writevar).
+	N.B. currently writevar is only implemented for two of the four
+	writable variables defined in RFC 4898, LimCwnd and LimRwin.
+	This is an initial implementation, and deserves further testing,
+	but has been included in this release for consideration.
+
+	Added function tcpe_data_delta for taking difference of counters,
+	and client deltavars.

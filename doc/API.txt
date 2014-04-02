@@ -1,0 +1,207 @@
+
+
+This is an overview of the Web10G API. The detailed implementation of
+the examples mentioned below may be found in the util/C directory.
+
+The namespace for the API library is "estats", a shortening of the
+prefix "tcp_estats", as used for the kernel functions, all in
+reference to RFC 4898 "TCP Extended Statistics MIB".
+
+All API functions have prefix "estats"; the library generated is
+"libestats".
+
+General patterns:
+-----------------
+
+All API functions (except for *_free/*_close/*_destroy) return
+
+struct estats_error*
+
+with return values passed by reference as the first parameter, for
+example:
+
+struct estats_error* estats_read_vars(struct estats_val_data*, args...);
+
+or, for initialization/allocation, e.g.
+
+struct estats_error* estats_nl_client_init(struct estats_nl_client**);
+
+This is commonly used with simple macro wrapping Chk() to pass the
+error up the chain of function calls.
+
+
+Here is a sketch of readvars.c:
+
+main {
+
+    Chk(estats_nl_client_init(&client));  // netlink initialization
+
+    Chk(estats_val_data_new(&data));  // new data struct
+
+    Chk(estats_read_vars(data, cid, client));  // read from kernel
+
+    ...do things...
+
+  Cleanup:
+    
+    estats_data_free(&data);
+
+    estats_nl_client_destroy(&client);
+
+    ...print or log error, if any, or return 0...
+
+     }
+
+
+In the above, struct val_data contains the read values of the extended
+MIB, received from the kernel over netlink, as an array.
+
+
+General initialization:
+-----------------------
+
+There are two modes currently supported: reading live data from
+the kernel via netlink and reading recorded data from a file; there is
+a plan for reading remote live data in the future.
+
+Initialization for reading live data proceeds as in the summary of
+readvars.c, above:
+
+    struct estats_nl_client* client = NULL;
+
+    Chk(estats_nl_client_init(&client));
+
+    ...
+
+  Cleanup:
+
+    ...
+    
+    estats_nl_client_destroy(&client);
+
+The data structure estats_nl_client is an opaque type, as implementation
+is dependent on supporting netlink libraries and is expected to evolve.
+
+
+Initialization for reading from a file is simply:
+
+    struct estats_record* record = NULL;
+
+    Chk(estats_record_open(&record, "path-to-file", "r"));
+
+    ...
+
+  Cleanup:
+
+    ...
+
+    estats_record_close(&record);
+    
+
+Allocation and reclamation are handled by the init/open, destroy/close
+functions respectively.
+
+
+Netlink functions:
+------------------
+
+The library netlink functions handle communication with the kernel,
+sending a request and processing the result. Currently there are the
+following:
+
+struct estats_error* estats_list_conns(struct estats_connection_list*,
+                                       const struct estats_nl_client*);
+
+    --Populates a linked list of connection tuples (allocated with
+    estats_connection_list_new), where a connection tuple consists
+    of the CID (connection ID, as defined in RFC 4898) and the
+    local/remote IP address and port. An example is given in listconns.c.
+
+struct estats_error* estats_read_vars(struct estats_val_data*, int cid,
+                                      const struct estats_nl_client*);
+
+    --Reads current MIB values, for the given connection ID, into
+    a member array belonging to struct estats_val_data (allocated with
+    estats_val_data_new). Examples are given in readvars.c/deltavars.c/
+    watchvars.c. 
+
+struct estats_error* estats_write_var(const char* name, uint32_t val,
+                                      int cid, const estats_nl_client*);
+
+    --Writes a value to the named MIB entry for the given CID. Only
+    four writable entries of the MIB tables are defined by RFC 4898;
+    currently, LimCwnd and LimRwin are implemented as writable. An
+    example is given in writevar.c.
+
+
+Connection list and associated information:
+-------------------------------------------
+
+The connection_list structure is an intrusive list of data structures:
+
+struct estats_connection {
+        uint8_t   rem_addr[17];
+        uint8_t   local_addr[17];
+        uint16_t  rem_port;
+        uint16_t  local_port;
+        int       cid;
+        struct estats_list  list;
+};
+
+This information is requested from the kernel with the function
+estats_list_conns, above. An example is given in listconns.c.
+
+
+After requesting the list above, one can add further information without
+a netlink request with:
+
+    struct estats_error* estats_connection_list_add_info(
+					struct estats_connection_list*);
+
+This adds uid, pid, invoking command line, and is done as post-processing
+from userland; one _can_ query the kernel for this information, but
+it is expensive and unnecessary as it can be recovered after the fact.
+An example is given in listconninfo.c.
+
+
+Record read/write functions:
+-----------------------------------------
+
+Reading/writing MIB values to file are accomplished simply with:
+
+struct estats_error* estats_record_write_data( struct estats_record *,
+                                               struct estats_val_data *);
+
+struct estats_error* estats_record_read_data( struct estats_val_data **,
+					      struct estats_record *);
+
+Simple examples are given in record_write.c/record_read.c.
+
+
+Error handling:
+---------------
+
+As noticed in the examples provided, error handling is persistent when
+passed through the chain of function calls by checking the return value.
+
+Extensive information on errors can be produced by configuring with
+
+    configure --enable-debug
+
+
+Miscellaneous utility functions:
+-------------------------------
+
+Utility functions for conversion of MIB values and connection tuples
+are provided by:
+
+struct estats_error* estats_connection_tuple_as_strings(
+		    struct estats_connection_tuple_ascii*,
+		    struct estats_connection_tuple*);
+
+struct estats_error* estats_val_as_string(char** str,
+		    const estats_val* val, enum ESTATS_VAL_TYPE type); 
+
+
+
+

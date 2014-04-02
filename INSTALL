@@ -1,0 +1,126 @@
+
+There are 3 steps to installation of Web10G userland:
+
+(1) Install the Web10G kernel patch.
+
+	The Web10G kernel patch is available from the project web site,
+	http://web10g.org. For the current Alpha versions, there is a
+	tight correlation between the kernel patch and userland releases,
+	indicated by the version number, currently 0.7.
+	
+	The kernel patches are against a mainline kernel, available
+	from kernel.org, of micro version 0; for example, the current
+	release is against version 3.9.0. Patching against
+	later micro versions will often work, with reasonable offset,
+	to produce a viable kernel, but this is not tested.
+
+	One should have a reproducible manner of building and installing
+	a mainline kernel, irrespective of the Web10G patch.
+
+	The pertinent configure options are:
+		Networking support --->
+		  Networking options --->
+		    [*] TCP: Extended TCP statistics (TCP ESTATS) MIB
+
+	This will enable the loadable kernel module:
+		Networking support --->
+		  Networking options --->
+		    [*] TCP: Extended TCP statistics (TCP ESTATS) MIB
+		    <M>   TCP: ESTATS netlink module
+
+	Previous versions encouraged setting the default congestion control
+	to RENO:
+
+		Networking support --->
+		  Networking options --->
+		    [*] TCP: advanced congestion control --->
+		        Default TCP congestion control (Reno)
+
+	However accommodations for CUBIC, BIC, and H-TCP are now implemented.
+
+	The loadable kernel module produced is named "tcp_estats_nl".
+
+
+(2) Install libmnl.
+
+	The current release uses libmnl for genetlink support; a distribution
+	is included.
+
+	libmnl is a "minimalistic user-space library oriented to Netlink
+	developers" (http://www.netfilter.org/projects/libmnl/index.html).
+
+	Web10G hides the netlink client library with opaque types, so changes
+	in this choice will not affect the API.
+
+	N.B.:
+
+	If one prefers to install libmnl via a Linux distribution package
+	manager, one should also install the (commonly-named) libmnl-devel
+	package for the header files.
+
+	If one installs from source, the default prefix will be /usr/local;
+	one then needs to add the appropriate pkgconfig path to one's
+	environment variable PKG_CONFIG_PATH, say,
+
+	export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig/
+
+	as the configure script uses the macro PKG_CHECK_MODULES.
+
+	This is a general issue with pkg-config, as is the need, for many
+	Linux distributions, of adding /usr/local/{lib,lib64} to ld.so.conf
+	or ld.so.conf.d/ and running ldconfig.
+
+	The above two requirements are well-known issues for installation
+	of software in Linux, and by no means specific to either libmnl
+	or Web10G.
+
+(3) Install Web10G.
+
+	./configure
+	make
+	sudo make install
+
+
+To run the examples, first load the module:
+
+	sudo modprobe tcp_estats_nl
+
+Then set the table mask via /proc/sys/net/ipv4/tcp_estats. 
+For example, 'echo 127 > /proc/sys/net/ipv4/tcp_estats' would enable 
+all of the available tables. Tables correspond to the folowing:
+
+Table Name	Mask (oct/dec)
+------------------------------
+PERF 		0x02	2			
+PATH		0x04	4
+STACK		0x08	8
+APP		0x10	16
+TUNE		0x20	32
+EXTRAS		0x40	64
+
+Then try the following tools; firstly run
+
+	web10g-listconns
+
+to list all connections in the form:
+
+CID LocalAddress LocalPort RemoteAddress RemotePort
+
+For a given CID of interest, one can run
+
+	web10g-readvars CID
+
+for an atomic read of all MIB variables, or
+
+	web10g-watchvars CID     or     web10g-deltavars CID
+
+for a repeated read of counters or difference of counters, each second.
+For details on querying the kernel for a subset of variables, run, e.g.,
+
+	web10g-deltavars -h
+
+
+
+
+
+
