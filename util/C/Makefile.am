@@ -1,4 +1,4 @@
-bin_PROGRAMS = web10g-deltavars web10g-listconninfo web10g-listconns web10g-readvars web10g-record_read web10g-record_write web10g-watchvars web10g-writevar web10g-logger
+bin_PROGRAMS = web10g-deltavars web10g-getmib web10g-listconninfo web10g-listconns web10g-readvars web10g-record_read web10g-record_write web10g-watchvars web10g-writevar web10g-logger
 
 LIBESTATS_LDADDS = @STRIP_BEGIN@ \
 	$(top_builddir)/lib/estats/libestats.la \
@@ -11,6 +11,9 @@ AM_CPPFLAGS = @STRIP_BEGIN@ \
 
 web10g_deltavars_SOURCES = web10g-deltavars.c scripts.h
 web10g_deltavars_LDADD = $(LIBESTATS_LDADDS)
+
+web10g_getmib_SOURCES = web10g-getmib.c scripts.h
+web10g_getmib_LDADD = $(LIBESTATS_LDADDS)
 
 web10g_listconninfo_SOURCES = web10g-listconninfo.c scripts.h
 web10g_listconninfo_LDADD = $(LIBESTATS_LDADDS)

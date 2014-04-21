@@ -559,9 +559,9 @@ estats_write_var(const char* varname, uint32_t val, int cid, const estats_nl_cli
 	int ret;
 
 	char buf[MNL_SOCKET_BUFFER_SIZE];
-	struct nlmsghdr *nlh;
-	struct genlmsghdr *genl;
-	struct nlattr *attrp;
+	struct nlmsghdr* nlh;
+	struct genlmsghdr* genl;
+	struct nlattr* attrp;
 
 	unsigned int seq, portid;
 
@@ -576,7 +576,7 @@ estats_write_var(const char* varname, uint32_t val, int cid, const estats_nl_cli
 	nlh->nlmsg_seq = seq = time(NULL);
 	genl = mnl_nlmsg_put_extra_header(nlh, sizeof(struct genlmsghdr));
 
-	genl->cmd = TCPE_CMD_WRITE_VAR;
+	genl->cmd = TCPE_CMD_WRITE_VARS;
 
         attrp = mnl_attr_nest_start_check(nlh, getpagesize(), NLE_ATTR_4TUPLE);
 	Err2If(!attrp, ESTATS_ERR_GENL, "attr_nest_start failure");
@@ -608,4 +608,59 @@ estats_write_var(const char* varname, uint32_t val, int cid, const estats_nl_cli
 
  Cleanup:
  	return err;
+}
+
+struct estats_error*
+estats_get_mib(struct estats_val_data* data, const estats_nl_client* cl)
+{
+	estats_error* err = NULL;
+	struct mnl_socket* nl;
+	int fam_id; 
+	int ret;
+	int k;
+
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	struct nlmsghdr *nlh;
+	struct genlmsghdr *genl;
+	struct nlattr *attrp;
+
+	unsigned int seq, portid;
+
+	ErrIf(cl == NULL, ESTATS_ERR_INVAL);
+
+	nl = cl->mnl_sock;
+	fam_id = cl->fam_id;
+
+	portid = mnl_socket_get_portid(nl);
+
+	nlh = mnl_nlmsg_put_header(buf);
+	nlh->nlmsg_type = fam_id;
+	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
+	nlh->nlmsg_seq = seq = time(NULL);
+	genl = mnl_nlmsg_put_extra_header(nlh, sizeof(struct genlmsghdr));
+
+	genl->cmd = TCPE_CMD_INIT;
+
+	ret = mnl_socket_sendto(nl, nlh, nlh->nlmsg_len);
+
+	Err2If(ret == -1, ESTATS_ERR_GENL, "mnl_socket_sendto");
+
+	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
+	while (ret > 0) {
+		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, NULL);
+		if (ret <= 0)
+			break;
+		ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
+	}
+#if 0
+	Err2If(ret == -1, ESTATS_ERR_GENL, "error");
+#else
+	if (ret == -1) {
+		printf("%s\n", strerror(errno));
+		Err2(ESTATS_ERR_GENL, "mnl_cb_run error");
+	}
+#endif
+
+ Cleanup:
+	return err;
 }
