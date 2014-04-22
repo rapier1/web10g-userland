@@ -343,38 +343,45 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
                         return MNL_CB_ERROR;
                 }
                 break;
-        case NLE_ATTR_PERF:
+        case NLE_ATTR_PERF_VARS:
                 if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_PERF\n");
                         return MNL_CB_ERROR;
                 }
                 break;
-        case NLE_ATTR_PATH:
+        case NLE_ATTR_PATH_VARS:
                 if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_PATH\n");
                         return MNL_CB_ERROR;
                 }
                 break;
-        case NLE_ATTR_STACK:
+        case NLE_ATTR_STACK_VARS:
                 if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_STACK\n");
                         return MNL_CB_ERROR;
                 }
                 break;
-        case NLE_ATTR_APP:
+        case NLE_ATTR_APP_VARS:
                 if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_APP\n");
                         return MNL_CB_ERROR;
                 }
                 break;
-        case NLE_ATTR_TUNE:
+        case NLE_ATTR_TUNE_VARS:
                 if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_TUNE\n");
                         return MNL_CB_ERROR;
                 }
                 break;
+        case NLE_ATTR_EXTRAS_VARS:
+                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
+                        dbgprintf("mnl_attr_validate NLE_ATTR_EXTRAS\n");
+                        return MNL_CB_ERROR;
+                }
+                break;
         }
         tb[type] = attr;
+
         return MNL_CB_OK;
 }
 
@@ -396,16 +403,18 @@ static int data_cb(const struct nlmsghdr *nlh, void *data)
 	}
         if (tb[NLE_ATTR_TIME])
                 parse_time(tb[NLE_ATTR_TIME], NULL);
-        if (tb[NLE_ATTR_PERF])
-                parse_table(tb[NLE_ATTR_PERF], PERF_TABLE);
-        if (tb[NLE_ATTR_PATH])
-                parse_table(tb[NLE_ATTR_PATH], PATH_TABLE);
-        if (tb[NLE_ATTR_STACK])
-                parse_table(tb[NLE_ATTR_STACK], STACK_TABLE);
-        if (tb[NLE_ATTR_APP])
-                parse_table(tb[NLE_ATTR_APP], APP_TABLE);
-        if (tb[NLE_ATTR_TUNE])
-                parse_table(tb[NLE_ATTR_TUNE], TUNE_TABLE);
+        if (tb[NLE_ATTR_PERF_VARS])
+                parse_table(tb[NLE_ATTR_PERF_VARS], PERF_TABLE);
+        if (tb[NLE_ATTR_PATH_VARS])
+                parse_table(tb[NLE_ATTR_PATH_VARS], PATH_TABLE);
+        if (tb[NLE_ATTR_STACK_VARS])
+                parse_table(tb[NLE_ATTR_STACK_VARS], STACK_TABLE);
+        if (tb[NLE_ATTR_APP_VARS])
+                parse_table(tb[NLE_ATTR_APP_VARS], APP_TABLE);
+        if (tb[NLE_ATTR_TUNE_VARS])
+                parse_table(tb[NLE_ATTR_TUNE_VARS], TUNE_TABLE);
+        if (tb[NLE_ATTR_EXTRAS_VARS])
+                parse_table(tb[NLE_ATTR_EXTRAS_VARS], TUNE_TABLE);
  
         return MNL_CB_OK;
 }
@@ -576,7 +585,7 @@ estats_write_var(const char* varname, uint32_t val, int cid, const estats_nl_cli
 	nlh->nlmsg_seq = seq = time(NULL);
 	genl = mnl_nlmsg_put_extra_header(nlh, sizeof(struct genlmsghdr));
 
-	genl->cmd = TCPE_CMD_WRITE_VARS;
+	genl->cmd = TCPE_CMD_WRITE_VAR;
 
         attrp = mnl_attr_nest_start_check(nlh, getpagesize(), NLE_ATTR_4TUPLE);
 	Err2If(!attrp, ESTATS_ERR_GENL, "attr_nest_start failure");
