@@ -76,12 +76,12 @@ static int parse_table_cb(const struct nlattr *attr, void *data)
 
 static void parse_table(struct nlattr *nested, int index)
 {
-
         struct nlattr *tb_perf[PERF_INDEX_MAX+1]   = {};
         struct nlattr *tb_path[PATH_INDEX_MAX+1]   = {};
         struct nlattr *tb_stack[STACK_INDEX_MAX+1] = {};
         struct nlattr *tb_app[APP_INDEX_MAX+1]     = {};
         struct nlattr *tb_tune[TUNE_INDEX_MAX+1]   = {};
+        struct nlattr *tb_extras[EXTRAS_INDEX_MAX+1] = {};
 
         struct index_attr ia = { .index = index };
         int i, j;
@@ -105,6 +105,10 @@ static void parse_table(struct nlattr *nested, int index)
                 break;
         case TUNE_TABLE:
                 ia.tb = tb_tune;
+
+                break;
+        case EXTRAS_TABLE:
+                ia.tb = tb_extras;
 
                 break;
         }

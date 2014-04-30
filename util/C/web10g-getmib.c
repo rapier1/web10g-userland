@@ -155,26 +155,31 @@ int main(int argc, char **argv)
 
 	printf("Timestamp sec: %u, usec: %u\n", data->tv.sec, data->tv.usec);
 
+	printf("DEBUG: operating over %d indices in data.\n", data->length);
 	for (j = 0; j < data->length; j++){
 	printf("DEBUG: operating on index: %d\n", j);
 
-		if (j == 0)
-			printf("\n\n Perf Table\n\n");
-		if (j == PERF_INDEX_MAX)
-			printf("\n\n Path Table\n\n");
-		if (j == PERF_INDEX_MAX+PATH_INDEX_MAX)
-			printf("\n\n Stack Table\n\n");
-		if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX)
-			printf("\n\n App Table\n\n");
-		if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX+APP_INDEX_MAX)
-			printf("\n\n Tune Table\n\n");
+        // Print out headers.
+        if (j == 0)
+          printf("\n\n Perf Table\n\n");
+        if (j == PERF_INDEX_MAX)
+          printf("\n\n Path Table\n\n");
+        if (j == PERF_INDEX_MAX+PATH_INDEX_MAX)
+          printf("\n\n Stack Table\n\n");
+        if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX)
+          printf("\n\n App Table\n\n");
+        if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX+APP_INDEX_MAX)
+          printf("\n\n Tune Table\n\n");
+        if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX+APP_INDEX_MAX+TUNE_INDEX_MAX)
+          printf("\n\n Extras Table\n\n");
 
 
-                /*
-		if (data->val[j].masked) continue;
 
-		switch(estats_var_array[j].valtype) {
-			case ESTATS_UNSIGNED64:
+        /*
+          if (data->val[j].masked) continue;
+
+          switch(estats_var_array[j].valtype) {
+          case ESTATS_UNSIGNED64:
 				printf("%s=%"PRIu64"\n", estats_var_array[j].name, data->val[j].uv64);
                 		break;
                         case ESTATS_UNSIGNED32:
