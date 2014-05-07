@@ -506,35 +506,6 @@ static int get_mib_attr_cb(const struct nlattr *attr, void *data)
         return MNL_CB_OK;
 }
 
-static int get_mib_cb(const struct nlmsghdr *nlh, void *data)
-{
-        struct nlattr *tb[NLE_ATTR_MAX+1] = {};
-        struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
-        printf("DEBUG: XXX get_mib_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
-	struct estats_connection_list *cli;
-
-	mnl_attr_parse(nlh, sizeof(*genl), get_mib_attr_cb, tb);
-
-        if (tb[NLE_ATTR_NUM_TABLES]) {
-          parse_num_tables(tb[NLE_ATTR_NUM_TABLES], NULL);
-        if (tb[NLE_ATTR_NUM_VARS]) {
-          parse_num_vars(tb[NLE_ATTR_NUM_VARS], NULL);
-        if (tb[NLE_ATTR_PERF_VARS])
-                parse_table_var_name(tb[NLE_ATTR_PERF_VARS], PERF_TABLE);
-        if (tb[NLE_ATTR_PATH_VARS])
-                parse_table_var_name(tb[NLE_ATTR_PATH_VARS], PATH_TABLE);
-        if (tb[NLE_ATTR_STACK_VARS])
-                parse_table_var_name(tb[NLE_ATTR_STACK_VARS], STACK_TABLE);
-        if (tb[NLE_ATTR_APP_VARS])
-                parse_table_var_name(tb[NLE_ATTR_APP_VARS], APP_TABLE);
-        if (tb[NLE_ATTR_TUNE_VARS])
-                parse_table_var_name(tb[NLE_ATTR_TUNE_VARS], TUNE_TABLE);
-        if (tb[NLE_ATTR_EXTRAS_VARS])
-                parse_table_var_name(tb[NLE_ATTR_EXTRAS_VARS], EXTRAS_TABLE);
- 
-        return MNL_CB_OK;
-}
-
 static void parse_num_tables(struct nlattr* attr, void* data)
 {
   /* Note, since NLE_ATTR_NUM_TABLES is not nested, we don't need a mnl_attr_parse_nested()! */
@@ -676,6 +647,35 @@ static void parse_table_var_name(struct nlattr* nested, int index)
 		else stat_val[j].masked = 1;
         }
   */
+}
+
+static int get_mib_cb(const struct nlmsghdr *nlh, void *data)
+{
+        struct nlattr *tb[NLE_ATTR_MAX+1] = {};
+        struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+        printf("DEBUG: XXX get_mib_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
+	struct estats_connection_list *cli;
+
+	mnl_attr_parse(nlh, sizeof(*genl), get_mib_attr_cb, tb);
+
+        if (tb[NLE_ATTR_NUM_TABLES]) {
+          parse_num_tables(tb[NLE_ATTR_NUM_TABLES], NULL);
+        if (tb[NLE_ATTR_NUM_VARS]) {
+          parse_num_vars(tb[NLE_ATTR_NUM_VARS], NULL);
+        if (tb[NLE_ATTR_PERF_VARS])
+                parse_table_var_name(tb[NLE_ATTR_PERF_VARS], PERF_TABLE);
+        if (tb[NLE_ATTR_PATH_VARS])
+                parse_table_var_name(tb[NLE_ATTR_PATH_VARS], PATH_TABLE);
+        if (tb[NLE_ATTR_STACK_VARS])
+                parse_table_var_name(tb[NLE_ATTR_STACK_VARS], STACK_TABLE);
+        if (tb[NLE_ATTR_APP_VARS])
+                parse_table_var_name(tb[NLE_ATTR_APP_VARS], APP_TABLE);
+        if (tb[NLE_ATTR_TUNE_VARS])
+                parse_table_var_name(tb[NLE_ATTR_TUNE_VARS], TUNE_TABLE);
+        if (tb[NLE_ATTR_EXTRAS_VARS])
+                parse_table_var_name(tb[NLE_ATTR_EXTRAS_VARS], EXTRAS_TABLE);
+ 
+        return MNL_CB_OK;
 }
 
 struct estats_error*
