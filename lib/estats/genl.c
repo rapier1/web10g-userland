@@ -118,14 +118,12 @@ static void parse_table(struct nlattr *nested, int index)
 
         mnl_attr_parse_nested(nested, parse_table_cb, &ia);
 
-        printf("DEBUG: XXX parse_table(): max_index[%d]: %d.\n", index, max_index[index]);
         for (i = 0; i < max_index[index]; i++) {
 
 		j = single_index(index, i);
 		
                 if (ia.tb[i]) {
 
-                  printf("DEBUG: XXX parse_table(): setting val[%d] union to tb[%d].\n", j, i);
 			switch(estats_var_array[j].valtype) {
 
                         case ESTATS_UNSIGNED64: 
@@ -335,7 +333,6 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
 {
         const struct nlattr **tb = data;
         int type = mnl_attr_get_type(attr);
-          printf("DEBUG: XXX data_attr_cb(): type: %d.\n", type);
 
         if (mnl_attr_type_valid(attr, NLE_ATTR_MAX) < 0)
                 return MNL_CB_OK;
@@ -399,7 +396,7 @@ static int data_cb(const struct nlmsghdr *nlh, void *data)
 {
         struct nlattr *tb[NLE_ATTR_MAX+1] = {};
         struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
-          printf("DEBUG: XXX data_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
+        // XXX fprintf(stderr, "DEBUG: data_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
 	struct estats_connection_list *cli;
 
 	mnl_attr_parse(nlh, sizeof(*genl), data_attr_cb, tb);
@@ -437,17 +434,13 @@ static void parse_num_tables(struct nlattr* attr, void* data)
 {
   /* Note, since NLE_ATTR_NUM_TABLES is not nested, we don't need a mnl_attr_parse_nested()! */
 
-        printf("DEBUG: XXX parse_num_tables(): attr type: %d, len: %d.\n", attr->nla_type, attr->nla_len);
         num_tables = mnl_attr_get_u32(attr);
-        printf("DEBUG: XXX parse_num_tables(): num tables: %d.\n", num_tables);
 }
 
 static void parse_num_vars(struct nlattr* attr, void* data)
 {
   /* Note, since NLE_ATTR_NUM_VARS is not nested, we don't need a mnl_attr_parse_nested()! */
-        printf("DEBUG: XXX parse_num_vars(): attr type: %d, len: %d.\n", attr->nla_type, attr->nla_len);
         num_vars = mnl_attr_get_u32(attr);
-        printf("DEBUG: XXX parse_num_vars(): num vars: %d.\n", num_vars);
 }
 #endif
 
@@ -456,7 +449,7 @@ static int parse_table_name_cb(const struct nlattr* attr, void* data)
         // XXX const struct nlattr **tb = (const struct nlattr **)data;
 	int type = mnl_attr_get_type(attr);
 
-        fprintf(stderr, "DEBUG: XXX parse_table_name_cb(): working with type: %d.\n", type);
+        // XXX fprintf(stderr, "DEBUG: parse_table_name_cb(): working with type: %d.\n", type);
 
 	switch(type) {
 	case NEA_VAR_NAME:
