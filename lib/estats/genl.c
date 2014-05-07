@@ -432,80 +432,6 @@ static int data_cb(const struct nlmsghdr *nlh, void *data)
 
 /* Routines concerned with simply getting the attribute name (as opposed to value).  This really doesn't ammke a lot of sense, i.e., we simply took John's code for parsing (and storing the vars) and adapted it for get-mib.  In the future, I think I'll rewrite to not even use libmnl for (at least) get-mib.  TODO(aka) */
 
-static int get_mib_attr_cb(const struct nlattr *attr, void *data)
-{
-        const struct nlattr **tb = data;
-        int type = mnl_attr_get_type(attr);
-          printf("DEBUG: XXX get_mib_attr_cb(): type: %d.\n", type);
-
-        if (mnl_attr_type_valid(attr, NLE_ATTR_MAX) < 0)
-                return MNL_CB_OK;
-
-        switch(type) {
-        case NLE_ATTR_NUM_TABLES:
-		if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0) {
-                        dbgprintf("mnl_attr_validate NLE_ATTR_NUM_TABLES\n");
-                        return MNL_CB_ERROR;
-                }
-                break;
-        case NLE_ATTR_NUM_VARS:
-		if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0) {
-                        dbgprintf("mnl_attr_validate NLE_ATTR_NUM_VARS\n");
-                        return MNL_CB_ERROR;
-                }
-                break;
-        case NLE_ATTR_PERF_VARS:
-                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
-                        dbgprintf("mnl_attr_validate NLE_ATTR_PERF\n");
-                        return MNL_CB_ERROR;
-                }
-                break;
-        case NLE_ATTR_PATH_VARS:
-                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
-                        dbgprintf("mnl_attr_validate NLE_ATTR_PATH\n");
-                        return MNL_CB_ERROR;
-                }
-                break;
-        case NLE_ATTR_STACK_VARS:
-                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
-                        dbgprintf("mnl_attr_validate NLE_ATTR_STACK\n");
-                        return MNL_CB_ERROR;
-                }
-                break;
-        case NLE_ATTR_APP_VARS:
-                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
-                        dbgprintf("mnl_attr_validate NLE_ATTR_APP\n");
-                        return MNL_CB_ERROR;
-                }
-                break;
-        case NLE_ATTR_TUNE_VARS:
-                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
-                        dbgprintf("mnl_attr_validate NLE_ATTR_TUNE\n");
-                        return MNL_CB_ERROR;
-                }
-                break;
-        case NLE_ATTR_EXTRAS_VARS:
-                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
-                        dbgprintf("mnl_attr_validate NLE_ATTR_EXTRAS\n");
-                        return MNL_CB_ERROR;
-                }
-                break;
-                /*
-        case NLE_ATTR_VAR:
-                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
-                        dbgprintf("mnl_attr_validate NLE_ATTR_VAR\n");
-                        return MNL_CB_ERROR;
-                }
-                break;
-                */
-          default :
-            printf("DEBUG: XXX get_mib_attr_cb(): unknown type: %d.\n", type);
-        }
-        tb[type] = attr;
-
-        return MNL_CB_OK;
-}
-
 static void parse_num_tables(struct nlattr* attr, void* data)
 {
   /* Note, since NLE_ATTR_NUM_TABLES is not nested, we don't need a mnl_attr_parse_nested()! */
@@ -528,25 +454,31 @@ static int parse_table_var_name_cb(const struct nlattr* attr, void* data)
 	const struct nlattr **tb = (const struct nlattr **)data;
 	int type = mnl_attr_get_type(attr);
 
-        printf("DEBUG: XXX parse_table_var_name_cb(): working with type: %d.\n", type);
+        fprintf(stderr, "DEBUG: XXX parse_table_var_name_cb(): working with type: %d.\n", type);
 
 	switch(type) {
 	case NEA_VAR_NAME:
 		if (mnl_attr_validate(attr, MNL_TYPE_STRING) < 0) {
 			perror("mnl_attr_validate NEA_VAR_NAME\n");
 			return MNL_CB_ERROR;
-		}
+		} else {
+                        const char* ptr = mnl_attr_get_str(tb[NEA_VAR_NAME]);
+                        printf("\t%s", ptr);  // note lack of '\n'
+                }
 		break;
 	case NEA_VAR_TYPE:
 		if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0) {
 			perror("mnl_attr_validate NEA_VAR_TYPE\n");
 			return MNL_CB_ERROR;
-		}
+		} else {
+                        type = mnl_attr_get_u32(tb[NEA_VAR_TYPE]);
+                        printf("\tType: %d\n", type);
+                }
 		break;
           default :
             printf("DEBUG: XXX parse_table_var_name_cb(): unknown type: %d.\n", type);
 	}
-	tb[type] = attr;  // XXX Broken, we just keep rewriting over, so need to pass in index!
+	// XXX tb[type] = attr;  // XXX Broken, we just keep rewriting over, so need to pass in index!
 
 	return MNL_CB_OK;
 }
@@ -646,15 +578,99 @@ static void parse_table_var_name(struct nlattr* nested, int index)
   */
 }
 
+static int get_mib_attr_cb(const struct nlattr *attr, void *data)
+{
+        const struct nlattr **tb = data;
+        int type = mnl_attr_get_type(attr);
+        fprintf(stderr, "DEBUG: get_mib_attr_cb(): working in attr type: %d.\n", type);
+
+        if (mnl_attr_type_valid(attr, NLE_ATTR_MAX) < 0)
+                return MNL_CB_OK;
+
+        switch(type) {
+        case NLE_ATTR_NUM_TABLES:
+		if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0) {
+                        dbgprintf("mnl_attr_validate NLE_ATTR_NUM_TABLES\n");
+                        return MNL_CB_ERROR;
+                } else {
+                        num_tables = mnl_attr_get_u32(attr);
+                        printf("contains %d table(s) ", num_tables);  // note lack of '\n'
+                }
+                break;
+        case NLE_ATTR_NUM_VARS:
+		if (mnl_attr_validate(attr, MNL_TYPE_U32) < 0) {
+                        dbgprintf("mnl_attr_validate NLE_ATTR_NUM_VARS\n");
+                        return MNL_CB_ERROR;
+                } else {
+                        num_vars = mnl_attr_get_u32(attr);
+                        printf("comprised of %d variables.\n", num_vars);
+                }
+                break;
+        case NLE_ATTR_PERF_VARS:
+                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
+                        dbgprintf("mnl_attr_validate NLE_ATTR_PERF\n");
+                        return MNL_CB_ERROR;
+                } else {
+                        printf("Performance Table:\n");
+                        mnl_attr_parse_nested(nested, parse_table_var_name_cb, tb);
+                }
+                break;
+        case NLE_ATTR_PATH_VARS:
+                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
+                        dbgprintf("mnl_attr_validate NLE_ATTR_PATH\n");
+                        return MNL_CB_ERROR;
+                }
+                break;
+        case NLE_ATTR_STACK_VARS:
+                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
+                        dbgprintf("mnl_attr_validate NLE_ATTR_STACK\n");
+                        return MNL_CB_ERROR;
+                }
+                break;
+        case NLE_ATTR_APP_VARS:
+                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
+                        dbgprintf("mnl_attr_validate NLE_ATTR_APP\n");
+                        return MNL_CB_ERROR;
+                }
+                break;
+        case NLE_ATTR_TUNE_VARS:
+                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
+                        dbgprintf("mnl_attr_validate NLE_ATTR_TUNE\n");
+                        return MNL_CB_ERROR;
+                }
+                break;
+        case NLE_ATTR_EXTRAS_VARS:
+                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
+                        dbgprintf("mnl_attr_validate NLE_ATTR_EXTRAS\n");
+                        return MNL_CB_ERROR;
+                }
+                break;
+                /*
+        case NLE_ATTR_VAR:
+                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
+                        dbgprintf("mnl_attr_validate NLE_ATTR_VAR\n");
+                        return MNL_CB_ERROR;
+                }
+                break;
+                */
+          default :
+            printf("DEBUG: XXX get_mib_attr_cb(): unknown type: %d.\n", type);
+        }
+        tb[type] = attr;
+
+        return MNL_CB_OK;
+}
+
 static int get_mib_cb(const struct nlmsghdr *nlh, void *data)
 {
         struct nlattr *tb[NLE_ATTR_MAX+1] = {};
         struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
-        printf("DEBUG: XXX get_mib_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
 	struct estats_connection_list *cli;
 
+        /* get_mib_attr_cb() prints each variable out to stdout as it sees it. */
 	mnl_attr_parse(nlh, sizeof(*genl), get_mib_attr_cb, tb);
 
+        /*
         if (tb[NLE_ATTR_NUM_TABLES])
           parse_num_tables(tb[NLE_ATTR_NUM_TABLES], NULL);
         if (tb[NLE_ATTR_NUM_VARS])
@@ -671,7 +687,8 @@ static int get_mib_cb(const struct nlmsghdr *nlh, void *data)
                 parse_table_var_name(tb[NLE_ATTR_TUNE_VARS], TUNE_TABLE);
         if (tb[NLE_ATTR_EXTRAS_VARS])
                 parse_table_var_name(tb[NLE_ATTR_EXTRAS_VARS], EXTRAS_TABLE);
- 
+        */
+
         return MNL_CB_OK;
 }
 
@@ -913,8 +930,10 @@ estats_get_mib(struct estats_val_data* data, const estats_nl_client* cl)
 	Err2If(ret == -1, ESTATS_ERR_GENL, "mnl_socket_sendto");
 
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
+        if (ret > 0)
+                printf("TCP Extended Statistics (RFC 4898) ");  // note lack of '\n'
 	while (ret > 0) {
-                printf("DEBUG: XXX estas_get_mib(): ret: %d.\n", ret);
+                fprintf(stderr, "DEBUG: XXX estas_get_mib(): ret: %d.\n", ret);
 		ret = mnl_cb_run(buf, ret, seq, portid, get_mib_cb, NULL);
 		if (ret <= 0)
 			break;

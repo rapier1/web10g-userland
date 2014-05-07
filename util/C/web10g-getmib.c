@@ -153,7 +153,7 @@ int main(int argc, char **argv)
 	genlmsg_end(msg, hdr);
         */
 
-	printf("Timestamp sec: %u, usec: %u\n", data->tv.sec, data->tv.usec);
+	printf("web10g-getmib: DEBUG: I don't think we need anything here, as estats_get_mib should print everything out!\n");
 
 	printf("DEBUG: operating over %d indices in data.\n", data->length);
 	for (j = 0; j < data->length; j++){
