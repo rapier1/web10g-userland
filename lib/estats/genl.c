@@ -535,7 +535,7 @@ static int parse_table_var_name_cb(const struct nlattr* attr, void* data)
 
 	switch(type) {
 	case NEA_VAR_NAME:
-		if (mnl_attr_validate(attr, MNL_TYPE_STR) < 0) {
+		if (mnl_attr_validate(attr, MNL_TYPE_STRING) < 0) {
 			perror("mnl_attr_validate NEA_VAR_NAME\n");
 			return MNL_CB_ERROR;
 		}
@@ -558,7 +558,7 @@ static void parse_table_var_name(struct nlattr* nested, int index)
 {
   struct nlattr *tb[NEA_TIME_MAX+1];  // XXX Wrong!
 	
-  char* name_ptr = NULL;
+        const char* name_ptr = NULL;
 	uint32_t type = 0;
 
         printf("DEBUG: XXX parse_table_var_name(): Working on index (table): %d.\n", index);
@@ -658,9 +658,9 @@ static int get_mib_cb(const struct nlmsghdr *nlh, void *data)
 
 	mnl_attr_parse(nlh, sizeof(*genl), get_mib_attr_cb, tb);
 
-        if (tb[NLE_ATTR_NUM_TABLES]) {
+        if (tb[NLE_ATTR_NUM_TABLES])
           parse_num_tables(tb[NLE_ATTR_NUM_TABLES], NULL);
-        if (tb[NLE_ATTR_NUM_VARS]) {
+        if (tb[NLE_ATTR_NUM_VARS])
           parse_num_vars(tb[NLE_ATTR_NUM_VARS], NULL);
         if (tb[NLE_ATTR_PERF_VARS])
                 parse_table_var_name(tb[NLE_ATTR_PERF_VARS], PERF_TABLE);
