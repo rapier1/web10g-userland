@@ -19,7 +19,7 @@
 
 int max_index[MAX_TABLE] = { PERF_INDEX_MAX, PATH_INDEX_MAX, STACK_INDEX_MAX, APP_INDEX_MAX, TUNE_INDEX_MAX };
 
-struct estats_var estats_var_array[TOTAL_INDEX_MAX] = {
+struct estats_var estats_var_array[TOTAL_NUM_VARS] = {
         ESTATSVAR(SegsOut,UNSIGNED32,COUNTER32),
         ESTATSVAR(DataSegsOut,UNSIGNED32,COUNTER32),
         ESTATSVAR(DataOctetsOut,UNSIGNED32,COUNTER32),
@@ -145,4 +145,7 @@ struct estats_var estats_var_array[TOTAL_INDEX_MAX] = {
         ESTATSVAR(LimSsthresh,UNSIGNED32,GAUGE32),
         ESTATSVAR(LimRwin,UNSIGNED32,GAUGE32),
         ESTATSVAR(LimMSS,UNSIGNED32,GAUGE32),
+
+        ESTATSVAR(OtherReductionsCV,UNSIGNED32,COUNTER32),
+        ESTATSVAR(OtherReductionsCM,UNSIGNED32,COUNTER32),
 };
