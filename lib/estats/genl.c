@@ -512,6 +512,7 @@ static void parse_num_tables(struct nlattr* attr, void* data)
 
         printf("DEBUG: XXX parse_num_tables(): attr type: %d, len: %d.\n", attr->nla_type, attr->nla_len);
         num_tables = mnl_attr_get_u32(attr);
+        printf("DEBUG: XXX parse_num_tables(): num tables: %d.\n", num_tables);
 }
 
 static void parse_num_vars(struct nlattr* attr, void* data)
@@ -519,6 +520,7 @@ static void parse_num_vars(struct nlattr* attr, void* data)
   /* Note, since NLE_ATTR_NUM_VARS is not nested, we don't need a mnl_attr_parse_nested()! */
         printf("DEBUG: XXX parse_num_vars(): attr type: %d, len: %d.\n", attr->nla_type, attr->nla_len);
         num_vars = mnl_attr_get_u32(attr);
+        printf("DEBUG: XXX parse_num_vars(): num vars: %d.\n", num_vars);
 }
 
 static int parse_table_var_name_cb(const struct nlattr* attr, void* data)
@@ -527,11 +529,6 @@ static int parse_table_var_name_cb(const struct nlattr* attr, void* data)
 	int type = mnl_attr_get_type(attr);
 
         printf("DEBUG: XXX parse_table_var_name_cb(): working with type: %d.\n", type);
-
-	if (mnl_attr_type_valid(attr, NEA_TIME_MAX) < 0) {
-		perror("mnl_attr_type_valid NEA_TIME_MAX\n");
-		return MNL_CB_ERROR;
-	}
 
 	switch(type) {
 	case NEA_VAR_NAME:
