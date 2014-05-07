@@ -173,7 +173,19 @@ typedef enum ESTATS_TUNE_INDEX {
 } ESTATS_TUNE_INDEX;
 #define TUNE_INDEX_MAX __TUNE_INDEX_MAX
 
-#define TOTAL_INDEX_MAX PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX+APP_INDEX_MAX+TUNE_INDEX_MAX
+typedef enum ESTATS_EXTRAS_INDEX {
+        OTHERREDUCTIONSCV,
+        OTHERREDUCTIONSCM,
+        __EXTRAS_INDEX_MAX
+} ESTATS_EXTRAS_INDEX;
+#define EXTRAS_INDEX_MAX __EXTRAS_INDEX_MAX
+
+#define TOTAL_NUM_VARS (PERF_INDEX_MAX + \
+                        PATH_INDEX_MAX + \
+                        STACK_INDEX_MAX + \
+                        APP_INDEX_MAX + \
+                        TUNE_INDEX_MAX + \
+                        EXTRAS_INDEX_MAX)
 
 #if BITS_PER_LONG == 64
 #define DEFAULT_PERF_MASK	(1UL << PERF_INDEX_MAX)-1
