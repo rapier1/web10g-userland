@@ -15,7 +15,7 @@
  */
 #include <estats/estats-int.h>
 
-static struct estats_val stat_val[TOTAL_INDEX_MAX];
+static struct estats_val stat_val[TOTAL_NUM_VARS];
 static struct estats_timeval stat_tv;
 static struct estats_connection_tuple stat_tuple;
 
@@ -86,6 +86,7 @@ static void parse_table(struct nlattr *nested, int index)
         struct index_attr ia = { .index = index };
         int i, j;
 
+          printf("DEBUG: XXX parse_table(): index: %d.\n", index);
         switch (index) {
         case PERF_TABLE:
                 ia.tb = tb_perf;
@@ -115,12 +116,14 @@ static void parse_table(struct nlattr *nested, int index)
 
         mnl_attr_parse_nested(nested, parse_table_cb, &ia);
 
+        printf("DEBUG: XXX parse_table(): max_index[%d]: %d.\n", index, max_index[index]);
         for (i = 0; i < max_index[index]; i++) {
 
 		j = single_index(index, i);
 		
                 if (ia.tb[i]) {
 
+                  printf("DEBUG: XXX parse_table(): setting val[%d] union to tb[%d].\n", j, i);
 			switch(estats_var_array[j].valtype) {
 
                         case ESTATS_UNSIGNED64: 
@@ -330,6 +333,7 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
 {
         const struct nlattr **tb = data;
         int type = mnl_attr_get_type(attr);
+          printf("DEBUG: XXX data_attr_cb(): type: %d.\n", type);
 
         if (mnl_attr_type_valid(attr, NLE_ATTR_MAX) < 0)
                 return MNL_CB_OK;
@@ -393,6 +397,7 @@ static int data_cb(const struct nlmsghdr *nlh, void *data)
 {
         struct nlattr *tb[NLE_ATTR_MAX+1] = {};
         struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+          printf("DEBUG: XXX data_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
 	struct estats_connection_list *cli;
 
 	mnl_attr_parse(nlh, sizeof(*genl), data_attr_cb, tb);
@@ -470,6 +475,7 @@ estats_list_conns(estats_connection_list* cli, const estats_nl_client* cl)
 
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	while (ret > 0) {
+          printf("DEBUG: XXX estas_list_conns(): ret: %d.\n", ret);
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, cli);
 		if (ret <= 0)
 			break;
@@ -537,6 +543,7 @@ estats_read_vars(struct estats_val_data* data, int cid, const estats_nl_client* 
 
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	while (ret > 0) {
+                printf("DEBUG: XXX estas_read_var(): ret: %d.\n", ret);
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, NULL);
 		if (ret <= 0)
 			break;
@@ -555,7 +562,7 @@ estats_read_vars(struct estats_val_data* data, int cid, const estats_nl_client* 
 	data->tv.sec = stat_tv.sec;
 	data->tv.usec = stat_tv.usec;
 
-	for (k = 0; k < TOTAL_INDEX_MAX; k++) {
+	for (k = 0; k < TOTAL_NUM_VARS; k++) {
 		data->val[k] = stat_val[k];
 	}
 
@@ -660,6 +667,7 @@ estats_get_mib(struct estats_val_data* data, const estats_nl_client* cl)
 
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	while (ret > 0) {
+                printf("DEBUG: XXX estas_get_mib(): ret: %d.\n", ret);
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, NULL);
 		if (ret <= 0)
 			break;

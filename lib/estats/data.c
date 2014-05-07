@@ -19,7 +19,7 @@ struct estats_error*
 estats_val_data_new(struct estats_val_data** data)
 {
 	estats_error* err = NULL;
-	int len = TOTAL_INDEX_MAX;
+	int len = TOTAL_NUM_VARS;
 
 	ErrIf(data == NULL, ESTATS_ERR_INVAL);
 	*data = NULL;
