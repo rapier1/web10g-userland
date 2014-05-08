@@ -400,7 +400,7 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
 
 static int data_cb(const struct nlmsghdr *nlh, void *data)
 {
-  printf("DEBUG: data_cb(): called.\n");
+  fprintf(stderr, "DEBUG: data_cb(): called.\n");
         struct nlattr *tb[NLE_ATTR_MAX+1] = {};
         struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
         fprintf(stderr, "DEBUG: data_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
@@ -781,6 +781,11 @@ estats_list_conns(estats_connection_list* cli, const estats_nl_client* cl)
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	while (ret > 0) {
           fprintf(stderr, "DEBUG: XXX estats_list_conns(): ret: on entering loop. %d.\n", ret);
+const struct nlmsghdr* nl_msghdr = buf;
+if (nl_msghdr->nlmsg_type >= NLMSG_MIN_TYPE) {
+          fprintf(stderr, "DEBUG: XXX estats_list_conns(): test to see if we call data_cb() passed.\n");
+}
+
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, cli);
           fprintf(stderr, "DEBUG: XXX estats_list_conns(): After call to mnl_cb_run(), ret: %d.\n", ret);
 		if (ret <= 0)
