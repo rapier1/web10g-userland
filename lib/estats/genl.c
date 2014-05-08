@@ -389,7 +389,7 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
                         return MNL_CB_ERROR;
                 }
                 break;
-          case default:
+          default:
             fprintf(stderr, "DEBUG: unknown type: %d.\n", type);
         }
         tb[type] = attr;
@@ -416,7 +416,7 @@ static int data_cb(const struct nlmsghdr *nlh, void *data)
 			parse_4tuple(tb[NLE_ATTR_4TUPLE]);
 	}
         if (tb[NLE_ATTR_TIME]) {
-          fprintf(stderr, "DEBUG: data_cb(): parsing TIME: %d.\n", (int)tb[NLE_ATTR_TIME]);
+          fprintf(stderr, "DEBUG: data_cb(): parsing TIME len: %d.\n", (int)tb[NLE_ATTR_TIME].nla_len);
                 parse_time(tb[NLE_ATTR_TIME], NULL);
         }
         if (tb[NLE_ATTR_PERF_VARS]) {
