@@ -781,10 +781,11 @@ estats_list_conns(estats_connection_list* cli, const estats_nl_client* cl)
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	while (ret > 0) {
           fprintf(stderr, "DEBUG: XXX estats_list_conns(): ret: on entering loop. %d.\n", ret);
-const struct nlmsghdr* nl_msghdr = buf;
+          const struct nlmsghdr* nl_msghdr = (void*)buf;
 if (nl_msghdr->nlmsg_type >= NLMSG_MIN_TYPE) {
           fprintf(stderr, "DEBUG: XXX estats_list_conns(): test to see if we call data_cb() passed.\n");
-}
+} else
+  fprintf(stderr, "DEBUG: XXX estats_list_conns(): nlmsg_type (%d) < NLMSG_MIN_TYPE (%d).\n", nl_msghdr->nlmsg_type, NLMSG_MIN_TYPE);
 
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, cli);
           fprintf(stderr, "DEBUG: XXX estats_list_conns(): After call to mnl_cb_run(), ret: %d.\n", ret);
