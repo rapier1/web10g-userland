@@ -780,8 +780,9 @@ estats_list_conns(estats_connection_list* cli, const estats_nl_client* cl)
 
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	while (ret > 0) {
-          fprintf(stderr, "DEBUG: XXX estats_list_conns(): ret: %d.\n", ret);
+          fprintf(stderr, "DEBUG: XXX estats_list_conns(): ret: on entering loop. %d.\n", ret);
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, cli);
+          fprintf(stderr, "DEBUG: XXX estats_list_conns(): After call to mnl_cb_run(), ret: %d.\n", ret);
 		if (ret <= 0)
 			break;
 		ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
