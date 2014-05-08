@@ -399,6 +399,7 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
 
 static int data_cb(const struct nlmsghdr *nlh, void *data)
 {
+  printf("DEBUG: data_cb(): called.\n");
         struct nlattr *tb[NLE_ATTR_MAX+1] = {};
         struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
         fprintf(stderr, "DEBUG: data_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
