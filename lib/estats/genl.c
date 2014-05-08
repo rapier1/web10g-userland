@@ -982,6 +982,12 @@ estats_get_mib(struct estats_val_data* data, const estats_nl_client* cl)
                 printf("TCP Extended Statistics (RFC 4898) ");  // note lack of '\n'
 	while (ret > 0) {
           fprintf(stderr, "DEBUG: XXX estats_get_mib(): ret: %d.\n", ret);
+          const struct nlmsghdr* nl_msghdr = (void*)buf;
+if (nl_msghdr->nlmsg_type >= NLMSG_MIN_TYPE) {
+          fprintf(stderr, "DEBUG: XXX estats_list_conns(): test to see if we call data_cb() passed.\n");
+} else
+  fprintf(stderr, "DEBUG: XXX estats_list_conns(): nlmsg_type (%d) < NLMSG_MIN_TYPE (%d).\n", nl_msghdr->nlmsg_type, NLMSG_MIN_TYPE);
+
 		ret = mnl_cb_run(buf, ret, seq, portid, get_mib_cb, NULL);
 		if (ret <= 0)
 			break;
