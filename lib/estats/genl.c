@@ -612,7 +612,7 @@ static int get_mib_attr_cb(const struct nlattr *attr, void *data)
                         return MNL_CB_ERROR;
                 } else {
                         printf("Performance Table:\n");
-                        mnl_attr_parse_nested(nested, parse_table_var_name_cb, tb);
+                        mnl_attr_parse_nested(attr, parse_table_var_name_cb, tb);
                 }
                 break;
         case NLE_ATTR_PATH_VARS:
