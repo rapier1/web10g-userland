@@ -24,79 +24,9 @@ void usage(void)
 
 int main(int argc, char **argv)
 {
-
 	estats_error* err = NULL;
 	struct estats_nl_client* cl = NULL;
-	estats_val_data* data = NULL;
-	int cid, i, j; 
-	int opt, option;
-
-        /*
-	char *strmask = NULL;
-        const char delim = ',';
-	uint64_t tmpmask;
-
-	struct estats_mask mask;
-
-	mask.masks[0] = DEFAULT_PERF_MASK;
-        mask.masks[1] = DEFAULT_PATH_MASK;
-        mask.masks[2] = DEFAULT_STACK_MASK;
-        mask.masks[3] = DEFAULT_APP_MASK;
-        mask.masks[4] = DEFAULT_TUNE_MASK;
-
-        for (i = 0; i < MAX_TABLE; i++) {
-                mask.if_mask[i] = 0;
-        }
-
-	if (argc < 2) {
-                usage();
-                exit(EXIT_FAILURE);
-        }	
-        */
-
-        /*
-        while ((opt = getopt(argc, argv, "hm:")) != -1) {
-                switch (opt) {
-		case 'h':
-                        usage();
-                        exit(EXIT_SUCCESS);
-                        break;
-                case 'm':
-                        strmask = strdup(optarg);
-
-                        for (j = 0; j < 5; j++) {
-                                char *strtmp;
-                                strtmp = strsep(&strmask, &delim);
-                                if (strtmp && strlen(strtmp)) {
-                                char *str;
-                                str = (str = strchr(strtmp, 'x')) ? str+1 : strtmp;
-                                if (sscanf(str, "%"PRIx64, &tmpmask) == 1) {
-                                        mask.masks[j] = tmpmask & mask.masks[j];
-                                        mask.if_mask[j] = 1;
-                                }
-                                }
-                        }
-                        option = opt;
-
-                        break;
-                default:
-                        exit(EXIT_FAILURE);
-                        break;
-                }
-        }
-        if ((option == 'm') && (optind+1 > argc)) {
-                printf("Too few non-option args\n");
-                exit(EXIT_FAILURE);
-        }
-
-	cid = atoi(argv[optind]);
-	*/
-
-	Chk(estats_nl_client_init(&cl));
-	//Chk(estats_nl_client_set_mask(cl, &mask));
-	Chk(estats_val_data_new(&data));
-
-	Chk(estats_get_mib(data, cl));
+	estats_val_data* data = NULL;  // TODO(aka) currently not used
 
         // The MIB is generated in the DLKM with the following code:
         /*
@@ -153,52 +83,9 @@ int main(int argc, char **argv)
 	genlmsg_end(msg, hdr);
         */
 
-	printf("web10g-getmib: DEBUG: I don't think we need anything here, as estats_get_mib should print everything out!\n");
-
-	printf("DEBUG: operating over %d indices in data.\n", data->length);
-	for (j = 0; j < data->length; j++){
-	printf("DEBUG: operating on index: %d\n", j);
-
-        // Print out headers.
-        if (j == 0)
-          printf("\n\n Perf Table\n\n");
-        if (j == PERF_INDEX_MAX)
-          printf("\n\n Path Table\n\n");
-        if (j == PERF_INDEX_MAX+PATH_INDEX_MAX)
-          printf("\n\n Stack Table\n\n");
-        if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX)
-          printf("\n\n App Table\n\n");
-        if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX+APP_INDEX_MAX)
-          printf("\n\n Tune Table\n\n");
-        if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX+APP_INDEX_MAX+TUNE_INDEX_MAX)
-          printf("\n\n Extras Table\n\n");
-
-
-
-        /*
-          if (data->val[j].masked) continue;
-
-          switch(estats_var_array[j].valtype) {
-          case ESTATS_UNSIGNED64:
-				printf("%s=%"PRIu64"\n", estats_var_array[j].name, data->val[j].uv64);
-                		break;
-                        case ESTATS_UNSIGNED32:
-				printf("%s=%"PRIu32"\n", estats_var_array[j].name, data->val[j].uv32);
-				break;
-                        case ESTATS_SIGNED32:
-				printf("%s=%"PRId32"\n", estats_var_array[j].name, data->val[j].sv32);
-                        	break;
-                        case ESTATS_UNSIGNED16:
-				printf("%s=%"PRIu16"\n", estats_var_array[j].name, data->val[j].uv16);
-                        	break;
-                        case ESTATS_UNSIGNED8:
-				printf("%s=%"PRIu8"\n", estats_var_array[j].name, data->val[j].uv8);
-                        	break;
-                        default:
-                                break;
-                }
-                */
-	}
+	Chk(estats_nl_client_init(&cl));
+	Chk(estats_val_data_new(&data));
+	Chk(estats_get_mib(data, cl));  // the MIB is printed out in estats_get_mib()
 
  Cleanup:
 	estats_val_data_free(&data);
