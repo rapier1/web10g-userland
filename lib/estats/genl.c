@@ -449,7 +449,7 @@ static void parse_num_vars(struct nlattr* attr, void* data)
         printf("DEBUG: XXX parse_num_vars(): num vars: %d.\n", num_vars);
 }
 
-static int parse_table_name_cb(const struct nlattr* nested, void* data)
+static int parse_table_name_cb(const struct nlattr* attr, void* data)
 {
         // XXX const struct nlattr **tb = (const struct nlattr **)data;
 	int type = mnl_attr_get_type(attr);
@@ -462,7 +462,7 @@ static int parse_table_name_cb(const struct nlattr* nested, void* data)
 			perror("mnl_attr_validate NEA_VAR_NAME\n");
 			return MNL_CB_ERROR;
 		} else {
-                        const char* ptr = mnl_attr_get_str(tb[NEA_VAR_NAME]);
+                        const char* ptr = mnl_attr_get_str(attr);
                         printf("\t%s", ptr);  // note lack of '\n'
                 }
 		break;
@@ -471,7 +471,7 @@ static int parse_table_name_cb(const struct nlattr* nested, void* data)
 			perror("mnl_attr_validate NEA_VAR_TYPE\n");
 			return MNL_CB_ERROR;
 		} else {
-                        type = mnl_attr_get_u32(tb[NEA_VAR_TYPE]);
+                        type = mnl_attr_get_u32(attr);
                         printf("\tType: %d\n", type);
                 }
 		break;
@@ -486,17 +486,17 @@ static int parse_table_name_cb(const struct nlattr* nested, void* data)
 static int parse_var_cb(const struct nlattr* nested, void* data)
 {
         // const struct nlattr **tb = (const struct nlattr **)data;
-	int type = mnl_attr_get_type(attr);
+	int type = mnl_attr_get_type(nested);
 
         fprintf(stderr, "DEBUG: XXX parse_var_cb(): working with type: %d.\n", type);
 
 	switch(type) {
         case NLE_ATTR_VAR:
-                if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
+                if (mnl_attr_validate(nested, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_VAR\n");
                         return MNL_CB_ERROR;
                 } else {
-                        mnl_attr_parse_nested(attr, parse_table_name_cb, data);
+                        mnl_attr_parse_nested(nested, parse_table_name_cb, data);
                 }
           default :
             printf("DEBUG: XXX parse_var_cb(): unknown type: %d.\n", type);
