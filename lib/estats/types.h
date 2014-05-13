@@ -181,6 +181,7 @@ enum MIB_TABLE {
         STACK_TABLE,
         APP_TABLE,
         TUNE_TABLE,
+	EXTRAS_TABLE,
         __MAX_TABLE
 };
 #define MAX_TABLE __MAX_TABLE
