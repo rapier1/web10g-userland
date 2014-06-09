@@ -468,7 +468,7 @@ static int parse_table_name_cb(const struct nlattr* attr, void* data)
 {
         // XXX const struct nlattr **tb = (const struct nlattr **)data;
 	int type = mnl_attr_get_type(attr);
-        fprintf(stderr, "DEBUG: parse_table_name_cb(): working with type: %d.\n", type);
+        //fprintf(stderr, "DEBUG: parse_table_name_cb(): working with type: %d.\n", type);
 
 	switch(type) {
 	case NEA_VAR_NAME:
@@ -786,7 +786,7 @@ estats_list_conns(estats_connection_list* cli, const estats_nl_client* cl)
 
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	while (ret > 0) {
-          printf("DEBUG: XXX estas_list_conns(): ret: %d.\n", ret);
+          fprintf(stderr, "DEBUG: XXX estats_list_conns(): ret: %d.\n", ret);
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, cli);
 		if (ret <= 0)
 			break;
@@ -854,7 +854,7 @@ estats_read_vars(struct estats_val_data* data, int cid, const estats_nl_client* 
 
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	while (ret > 0) {
-                printf("DEBUG: XXX estas_read_var(): ret: %d.\n", ret);
+                printf("DEBUG: XXX estats_read_var(): ret: %d.\n", ret);
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, NULL);
 		if (ret <= 0)
 			break;
@@ -980,7 +980,7 @@ estats_get_mib(struct estats_val_data* data, const estats_nl_client* cl)
         if (ret > 0)
                 printf("TCP Extended Statistics (RFC 4898) ");  // note lack of '\n'
 	while (ret > 0) {
-                //fprintf(stderr, "DEBUG: XXX estas_get_mib(): ret: %d.\n", ret);
+          fprintf(stderr, "DEBUG: XXX estats_get_mib(): ret: %d.\n", ret);
 		ret = mnl_cb_run(buf, ret, seq, portid, get_mib_cb, NULL);
 		if (ret <= 0)
 			break;
