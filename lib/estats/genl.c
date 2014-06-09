@@ -407,7 +407,7 @@ static int data_cb(const struct nlmsghdr *nlh, void *data)
 	mnl_attr_parse(nlh, sizeof(*genl), data_attr_cb, tb);
 
         if (tb[NLE_ATTR_4TUPLE]) {
-          fprintf(stderr, "DEBUG: data_cb(): parsing 4tuple: %d.\n", (int)tb[NLE_ATTR_4TUPLE]);
+          fprintf(stderr, "DEBUG: data_cb(): parsing 4tuple: %p.\n", (int)tb[NLE_ATTR_4TUPLE]);
 		if (data != NULL) {
 			cli = (struct estats_connection_list*) data;
 			parse_4tuple_list(tb[NLE_ATTR_4TUPLE], cli);
@@ -416,31 +416,31 @@ static int data_cb(const struct nlmsghdr *nlh, void *data)
 			parse_4tuple(tb[NLE_ATTR_4TUPLE]);
 	}
         if (tb[NLE_ATTR_TIME]) {
-          fprintf(stderr, "DEBUG: data_cb(): parsing TIME len: %d.\n", (int)tb[NLE_ATTR_TIME].nla_len);
+          fprintf(stderr, "DEBUG: data_cb(): parsing TIME: %p.\n", (int)tb[NLE_ATTR_TIME]);
                 parse_time(tb[NLE_ATTR_TIME], NULL);
         }
         if (tb[NLE_ATTR_PERF_VARS]) {
-          fprintf(stderr, "DEBUG: data_cb(): parsing PERF VARS: %d.\n", (int)tb[NLE_ATTR_PERF_VARS]);
+          fprintf(stderr, "DEBUG: data_cb(): parsing PERF VARS: %p.\n", (int)tb[NLE_ATTR_PERF_VARS]);
                 parse_table(tb[NLE_ATTR_PERF_VARS], PERF_TABLE);
         }
         if (tb[NLE_ATTR_PATH_VARS]) {
-          fprintf(stderr, "DEBUG: data_cb(): parsing PATH_VARS: %d.\n", (int)tb[NLE_ATTR_PATH_VARS]);
+          fprintf(stderr, "DEBUG: data_cb(): parsing PATH_VARS: %p.\n", (int)tb[NLE_ATTR_PATH_VARS]);
                 parse_table(tb[NLE_ATTR_PATH_VARS], PATH_TABLE);
         }
         if (tb[NLE_ATTR_STACK_VARS]) {
-          fprintf(stderr, "DEBUG: data_cb(): parsing STACK_VARS: %d.\n", (int)tb[NLE_ATTR_STACK_VARS]);
+          fprintf(stderr, "DEBUG: data_cb(): parsing STACK_VARS: %p.\n", (int)tb[NLE_ATTR_STACK_VARS]);
                 parse_table(tb[NLE_ATTR_STACK_VARS], STACK_TABLE);
         }
         if (tb[NLE_ATTR_APP_VARS]) {
-          fprintf(stderr, "DEBUG: data_cb(): parsing APP_VARS: %d.\n", (int)tb[NLE_ATTR_APP_VARS]);
+          fprintf(stderr, "DEBUG: data_cb(): parsing APP_VARS: %p.\n", (int)tb[NLE_ATTR_APP_VARS]);
                 parse_table(tb[NLE_ATTR_APP_VARS], APP_TABLE);
         }
         if (tb[NLE_ATTR_TUNE_VARS]) {
-          fprintf(stderr, "DEBUG: data_cb(): parsing TUNE_VARS: %d.\n", (int)tb[NLE_ATTR_TUNE_VARS]);
+          fprintf(stderr, "DEBUG: data_cb(): parsing TUNE_VARS: %p.\n", (int)tb[NLE_ATTR_TUNE_VARS]);
                 parse_table(tb[NLE_ATTR_TUNE_VARS], TUNE_TABLE);
         }
         if (tb[NLE_ATTR_EXTRAS_VARS]) {
-          fprintf(stderr, "DEBUG: data_cb(): parsing EXTRAS_VARS: %d.\n", (int)tb[NLE_ATTR_EXTRAS_VARS]);
+          fprintf(stderr, "DEBUG: data_cb(): parsing EXTRAS_VARS: %p.\n", (int)tb[NLE_ATTR_EXTRAS_VARS]);
                 parse_table(tb[NLE_ATTR_EXTRAS_VARS], EXTRAS_TABLE);
         }
  
