@@ -34,6 +34,8 @@ static int parse_table_cb(const struct nlattr *attr, void *data)
         int tblnum = ia->index;
 	int j;
 
+        fprintf(stderr, "DEBUG: XXX parse_table_cb(): type: %d, tblnum: %d.\n", type, tblnum);
+
 	if (mnl_attr_type_valid(attr, max_index[tblnum]) < 0) {
 		dbgprintf("mnl_attr_type_valid max_index[tblnum]\n");
 		return MNL_CB_ERROR;
@@ -88,7 +90,7 @@ static void parse_table(struct nlattr *nested, int index)
         struct index_attr ia = { .index = index };
         int i, j;
 
-          printf("DEBUG: XXX parse_table(): index: %d.\n", index);
+        fprintf(stderr, "DEBUG: XXX parse_table(): index: %d.\n", index);
         switch (index) {
         case PERF_TABLE:
                 ia.tb = tb_perf;
@@ -333,6 +335,7 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
 {
         const struct nlattr **tb = data;
         int type = mnl_attr_get_type(attr);
+        fprintf(stderr, "DEBUG: data_attr_cb(): type: %d.\n", type);
 
         if (mnl_attr_type_valid(attr, NLE_ATTR_MAX) < 0)
                 return MNL_CB_OK;
@@ -386,6 +389,8 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
                         return MNL_CB_ERROR;
                 }
                 break;
+          case default:
+            fprintf(stderr, "DEBUG: unknown type: %d.\n", type);
         }
         tb[type] = attr;
 
@@ -396,12 +401,13 @@ static int data_cb(const struct nlmsghdr *nlh, void *data)
 {
         struct nlattr *tb[NLE_ATTR_MAX+1] = {};
         struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
-        // XXX fprintf(stderr, "DEBUG: data_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
+        fprintf(stderr, "DEBUG: data_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
 	struct estats_connection_list *cli;
 
 	mnl_attr_parse(nlh, sizeof(*genl), data_attr_cb, tb);
 
         if (tb[NLE_ATTR_4TUPLE]) {
+          fprintf(stderr, "DEBUG: data_cb(): parsing 4tuple: %d.\n", (int)tb[NLE_ATTR_4TUPLE]);
 		if (data != NULL) {
 			cli = (struct estats_connection_list*) data;
 			parse_4tuple_list(tb[NLE_ATTR_4TUPLE], cli);
@@ -409,20 +415,34 @@ static int data_cb(const struct nlmsghdr *nlh, void *data)
 		else
 			parse_4tuple(tb[NLE_ATTR_4TUPLE]);
 	}
-        if (tb[NLE_ATTR_TIME])
+        if (tb[NLE_ATTR_TIME]) {
+          fprintf(stderr, "DEBUG: data_cb(): parsing TIME: %d.\n", (int)tb[NLE_ATTR_TIME]);
                 parse_time(tb[NLE_ATTR_TIME], NULL);
-        if (tb[NLE_ATTR_PERF_VARS])
+        }
+        if (tb[NLE_ATTR_PERF_VARS]) {
+          fprintf(stderr, "DEBUG: data_cb(): parsing PERF VARS: %d.\n", (int)tb[NLE_ATTR_PERF_VARS]);
                 parse_table(tb[NLE_ATTR_PERF_VARS], PERF_TABLE);
-        if (tb[NLE_ATTR_PATH_VARS])
+        }
+        if (tb[NLE_ATTR_PATH_VARS]) {
+          fprintf(stderr, "DEBUG: data_cb(): parsing PATH_VARS: %d.\n", (int)tb[NLE_ATTR_PATH_VARS]);
                 parse_table(tb[NLE_ATTR_PATH_VARS], PATH_TABLE);
-        if (tb[NLE_ATTR_STACK_VARS])
+        }
+        if (tb[NLE_ATTR_STACK_VARS]) {
+          fprintf(stderr, "DEBUG: data_cb(): parsing STACK_VARS: %d.\n", (int)tb[NLE_ATTR_STACK_VARS]);
                 parse_table(tb[NLE_ATTR_STACK_VARS], STACK_TABLE);
-        if (tb[NLE_ATTR_APP_VARS])
+        }
+        if (tb[NLE_ATTR_APP_VARS]) {
+          fprintf(stderr, "DEBUG: data_cb(): parsing APP_VARS: %d.\n", (int)tb[NLE_ATTR_APP_VARS]);
                 parse_table(tb[NLE_ATTR_APP_VARS], APP_TABLE);
-        if (tb[NLE_ATTR_TUNE_VARS])
+        }
+        if (tb[NLE_ATTR_TUNE_VARS]) {
+          fprintf(stderr, "DEBUG: data_cb(): parsing TUNE_VARS: %d.\n", (int)tb[NLE_ATTR_TUNE_VARS]);
                 parse_table(tb[NLE_ATTR_TUNE_VARS], TUNE_TABLE);
-        if (tb[NLE_ATTR_EXTRAS_VARS])
+        }
+        if (tb[NLE_ATTR_EXTRAS_VARS]) {
+          fprintf(stderr, "DEBUG: data_cb(): parsing EXTRAS_VARS: %d.\n", (int)tb[NLE_ATTR_EXTRAS_VARS]);
                 parse_table(tb[NLE_ATTR_EXTRAS_VARS], EXTRAS_TABLE);
+        }
  
         return MNL_CB_OK;
 }
@@ -448,8 +468,7 @@ static int parse_table_name_cb(const struct nlattr* attr, void* data)
 {
         // XXX const struct nlattr **tb = (const struct nlattr **)data;
 	int type = mnl_attr_get_type(attr);
-
-        // XXX fprintf(stderr, "DEBUG: parse_table_name_cb(): working with type: %d.\n", type);
+        fprintf(stderr, "DEBUG: parse_table_name_cb(): working with type: %d.\n", type);
 
 	switch(type) {
 	case NEA_VAR_NAME:
