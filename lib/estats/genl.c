@@ -34,7 +34,7 @@ static int parse_table_cb(const struct nlattr *attr, void *data)
         int tblnum = ia->index;
 	int j;
 
-        fprintf(stderr, "DEBUG: XXX parse_table_cb(): type: %d, tblnum: %d.\n", type, tblnum);
+        //fprintf(stderr, "DEBUG: XXX parse_table_cb(): type: %d, tblnum: %d.\n", type, tblnum);
 
 	if (mnl_attr_type_valid(attr, max_index[tblnum]) < 0) {
 		dbgprintf("mnl_attr_type_valid max_index[tblnum]\n");
@@ -90,7 +90,7 @@ static void parse_table(struct nlattr *nested, int index)
         struct index_attr ia = { .index = index };
         int i, j;
 
-        fprintf(stderr, "DEBUG: XXX parse_table(): index: %d.\n", index);
+        //fprintf(stderr, "DEBUG: XXX parse_table(): index: %d.\n", index);
         switch (index) {
         case PERF_TABLE:
                 ia.tb = tb_perf;
@@ -300,7 +300,7 @@ static void parse_4tuple_list(struct nlattr *nested, struct estats_connection_li
 
 static void parse_4tuple(struct nlattr *nested)
 {
-  fprintf(stderr, "DEBUG: parse_4tuple(): called.\n");
+  //fprintf(stderr, "DEBUG: parse_4tuple(): called.\n");
         struct nlattr *tb[NEA_4TUPLE_MAX+1];
         struct nlattr *attr;
 
@@ -336,7 +336,7 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
 {
         const struct nlattr **tb = data;
         int type = mnl_attr_get_type(attr);
-        fprintf(stderr, "DEBUG: data_attr_cb(): type: %d.\n", type);
+        //fprintf(stderr, "DEBUG: data_attr_cb(): type: %d.\n", type);
 
         if (mnl_attr_type_valid(attr, NLE_ATTR_MAX) < 0)
                 return MNL_CB_OK;
@@ -400,10 +400,10 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
 
 static int data_cb(const struct nlmsghdr *nlh, void *data)
 {
-  fprintf(stderr, "DEBUG: data_cb(): called.\n");
+  //fprintf(stderr, "DEBUG: data_cb(): called.\n");
         struct nlattr *tb[NLE_ATTR_MAX+1] = {};
         struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
-        fprintf(stderr, "DEBUG: data_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
+        //fprintf(stderr, "DEBUG: data_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
 	struct estats_connection_list *cli;
 
 	mnl_attr_parse(nlh, sizeof(*genl), data_attr_cb, tb);
@@ -780,15 +780,16 @@ estats_list_conns(estats_connection_list* cli, const estats_nl_client* cl)
 
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	while (ret > 0) {
+          /*
           fprintf(stderr, "DEBUG: XXX estats_list_conns(): ret: on entering loop. %d.\n", ret);
           const struct nlmsghdr* nl_msghdr = (void*)buf;
 if (nl_msghdr->nlmsg_type >= NLMSG_MIN_TYPE) {
           fprintf(stderr, "DEBUG: XXX estats_list_conns(): test to see if we call data_cb() passed.\n");
 } else
   fprintf(stderr, "DEBUG: XXX estats_list_conns(): nlmsg_type (%d) < NLMSG_MIN_TYPE (%d).\n", nl_msghdr->nlmsg_type, NLMSG_MIN_TYPE);
-
+          */
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, cli);
-          fprintf(stderr, "DEBUG: XXX estats_list_conns(): After call to mnl_cb_run(), ret: %d.\n", ret);
+                //fprintf(stderr, "DEBUG: XXX estats_list_conns(): After call to mnl_cb_run(), ret: %d.\n", ret);
 		if (ret <= 0)
 			break;
 		ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
@@ -855,7 +856,7 @@ estats_read_vars(struct estats_val_data* data, int cid, const estats_nl_client* 
 
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	while (ret > 0) {
-                printf("DEBUG: XXX estats_read_var(): ret: %d.\n", ret);
+          //fprintf(stderr, "DEBUG: XXX estats_read_var(): ret: %d.\n", ret);
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, NULL);
 		if (ret <= 0)
 			break;
@@ -981,13 +982,14 @@ estats_get_mib(struct estats_val_data* data, const estats_nl_client* cl)
         if (ret > 0)
                 printf("TCP Extended Statistics (RFC 4898) ");  // note lack of '\n'
 	while (ret > 0) {
+          /*
           fprintf(stderr, "DEBUG: XXX estats_get_mib(): ret: %d.\n", ret);
           const struct nlmsghdr* nl_msghdr = (void*)buf;
 if (nl_msghdr->nlmsg_type >= NLMSG_MIN_TYPE) {
           fprintf(stderr, "DEBUG: XXX estats_list_conns(): test to see if we call data_cb() passed.\n");
 } else
   fprintf(stderr, "DEBUG: XXX estats_list_conns(): nlmsg_type (%d) < NLMSG_MIN_TYPE (%d).\n", nl_msghdr->nlmsg_type, NLMSG_MIN_TYPE);
-
+          */
 		ret = mnl_cb_run(buf, ret, seq, portid, get_mib_cb, NULL);
 		if (ret <= 0)
 			break;
