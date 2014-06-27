@@ -21,25 +21,6 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-
-/* we need a different macro that does not go to Cleanup, but just to the end of the loop */
-#define Chk2(x) \
-    do { \
-	err = (x); \
-	if (err != NULL) { \
-	    dbgprintf("	  ... saw error \"%s\" (error code %d) at %s:%d in function %s (\"%s\")\n", \
-		      estats_error_get_message(err), \
-		      estats_error_get_number(err), \
-		      __FILE__, \
-		      __LINE__, \
-		      __FUNCTION__, \
-		      estats_error_get_extra(err)); \
-	    goto Continue; \
-	} \
-    } while (0)
-
-
-
 void usage(void)
 {
 	printf("\n\n");
@@ -82,7 +63,7 @@ int main(int argc, char **argv)
 	struct estats_connection* cp;
 	struct estats_connection_tuple_ascii asc;
 
-	int cid, i; 
+	int cid, i;
 	int opt;
 
 	char *strmask = NULL;
@@ -175,11 +156,17 @@ int main(int argc, char **argv)
 		/* active get connections */
 		Chk(estats_list_conns(clist, cl));
 
+		int max = 0;
+		int min = 0; 
 		list_for_each(&clist->connection_head, cp, list) {
+			max++;
 			struct estats_connection_tuple* ct = (struct estats_connection_tuple*) cp;
 
-			Chk2(estats_connection_tuple_as_strings(&asc, ct));
-			Chk2(estats_read_vars(data, atoi(asc.cid), cl));
+			// this Chk macro doesn't go to Cleanup but to continue. 
+			// it also doesn't report the error directly as, for the most part,
+			// the genetlink library will report the error as well
+			Chk2Ign(estats_connection_tuple_as_strings(&asc, ct));
+			Chk2Ign(estats_read_vars(data, atoi(asc.cid), cl));
 	
 			if (data->length == 0)
 				continue;
@@ -220,10 +207,12 @@ int main(int argc, char **argv)
 			}
 
 			printf("\n");
+			min++;
  Continue:
 			while(0) {} /* make the compiler happy */
 		}
 
+		printf ("\nProcessed %d of %d connections\n\n", min, max);
 		usleep(interval * 1000);
 	}
 
