@@ -240,6 +240,7 @@ estats_connection_list_add_info(struct estats_connection_list* connection_list)
 	estats_connection_info* ino_info;
 	estats_connection_info* pid_info;
 	estats_connection_info* conninfo;
+	estats_connection_info* tmp_ptr;	
 	int myino = 0;
 
 	uint32_t b, c;
@@ -373,6 +374,21 @@ Cleanup:
 		free(tcp_hash_tmp);            
 	}
 
+        list_for_each_safe(&tcp_head, tcp_info, tmp_ptr, list) {
+                list_del(&tcp_info->list);
+                free(tcp_info);
+        }
+
+        list_for_each_safe(&ino_head, ino_info, tmp_ptr, list) {
+                list_del(&ino_info->list);
+                free(ino_info);
+        }
+
+        list_for_each_safe(&pid_head, pid_info, tmp_ptr, list) {
+                list_del(&pid_info->list);
+                free(pid_info);
+        }
+        
 	return err;
 }
 
