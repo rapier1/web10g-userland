@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 2013 The Board of Trustees of the University of Illinois,
+ * Copyright (c) 2014 The Board of Trustees of the University of Illinois,
  *                    Carnegie Mellon University.
+ *
  *
  * This library is free software; you can redistribute it and/or modify it
  * under the terms of the MIT License.
@@ -13,7 +14,18 @@
  * if not, see http://opensource.org/licenses/MIT.
  *
  */
+/* hash functions extracted from 
+ * lookup3.c, by Bob Jenkins, May 2006, Public Domain.
+ */
+/* hash table function provided by uthash by
+ * Copyright (c) 2003-2014, Troy D. Hanson     http://troydhanson.github.com/uthash/
+ * All rights reserved.
+ *
+ */
+
 #include <estats/estats-int.h>
+#include "uthash.h"
+#include "lookup3.h"
 
 struct estats_error*
 estats_connection_list_new(struct estats_connection_list** connection_list)
@@ -195,6 +207,27 @@ static struct estats_error* _estats_get_tcp_list(struct list_head*, const struct
 static struct estats_error* _estats_get_ino_list(struct list_head*);
 static struct estats_error* _estats_get_pid_list(struct list_head*);
 
+struct s_tcp_hash {
+	uint32_t tcpkey;
+	struct estats_connection_info* info;
+	UT_hash_handle hh;
+};
+
+struct s_ino_hash {
+	int ino;
+	uint32_t inokey;
+	struct estats_connection_info* info;
+	UT_hash_handle hh;
+};
+
+struct s_pid_hash {
+	int ino;
+	struct estats_connection_info* info;
+	UT_hash_handle hh;
+};
+
+/* create a series of hashes and compare the overlapping information
+ * to extract extra information like the command line, PID and UID */
 struct estats_error*
 estats_connection_list_add_info(struct estats_connection_list* connection_list)
 {
@@ -207,99 +240,139 @@ estats_connection_list_add_info(struct estats_connection_list* connection_list)
 	estats_connection_info* ino_info;
 	estats_connection_info* pid_info;
 	estats_connection_info* conninfo;
-	estats_connection_info* tmp;
-	int dif;
-	int tcp_entry, fd_entry;
+	int myino = 0;
+
+	uint32_t b, c;
+
+	struct s_tcp_hash *tcp_hash = NULL; // the main hash table
+	struct s_tcp_hash *tcp_hash_tmp = NULL; // the current pointer into the hash
+	struct s_tcp_hash *tcp_hash_del = NULL; // tmp pointer to the next pointed in the hash
+	struct s_ino_hash *ino_hash = NULL;
+	struct s_ino_hash *ino_hash_tmp = NULL;
+	struct s_ino_hash *ino_hash_del = NULL;
+	struct s_pid_hash *pid_hash = NULL;
+	struct s_pid_hash *pid_hash_tmp;
+	struct s_pid_hash *pid_hash_del = NULL;
+	struct estats_connection_tuple_ascii tuple_ascii = { 0 };	
 
 	ErrIf(connection_list == NULL, ESTATS_ERR_INVAL);
 
 	head = &connection_list->connection_info_head;
 
+	// go through each tcp connection we know about and create a key based on
+	// a simple concatonation of the tuple information
+	// insert that into the hash with the tcp information as the value for that key
 	Chk(_estats_get_tcp_list(&tcp_head, connection_list));
-	Chk(_estats_get_ino_list(&ino_head));
-	Chk(_estats_get_pid_list(&pid_head));
-
 	estats_list_for_each(&tcp_head, tcp_info, list) {
-	    tcp_entry = 0;
-	    
-	    estats_list_for_each(&ino_head, ino_info, list) {
-		Chk(estats_connection_tuple_compare(&dif, &ino_info->tuple,
-						    &tcp_info->tuple));
-		if (!dif) {
-		    tcp_entry = 1;
-		    fd_entry = 0;
-
-		    estats_list_for_each(&pid_head, pid_info, list) {
-			if((ino_info->ino) &&
-			    (pid_info->ino == ino_info->ino)) { //add entry 
-			    fd_entry = 1;
-			    
-			    Chk(estats_connection_info_new(&conninfo));
-			    
-			    conninfo->pid = pid_info->pid;
-			    strncpy(conninfo->cmdline, pid_info->cmdline,
-				    sizeof(pid_info->cmdline));
-			    conninfo->uid = ino_info->uid;
-			    conninfo->state = ino_info->state;
-			    conninfo->cid = tcp_info->cid;
-			    conninfo->tuple = tcp_info->tuple;
-			    conninfo->ino = ino_info->ino;
-
-			    list_add_tail(head, &conninfo->list);
-			}
-		    }
-		    
-		    if(!fd_entry) { // add entry w/out cmdline
-			Chk(estats_connection_info_new(&conninfo));
-
-			conninfo->pid = -1;
-			conninfo->uid = ino_info->uid;
-			conninfo->state = ino_info->state;
-			conninfo->cid = tcp_info->cid;
-			conninfo->tuple = tcp_info->tuple;
-			if (ino_info->ino) conninfo->ino = ino_info->ino;
-			else conninfo->ino = -1;
-			strncpy(conninfo->cmdline, "\0", 1);
-			
-			list_add_tail(head, &conninfo->list);
-		    }
+		c = hashlittle(&tcp_info->tuple, sizeof(tcp_info->tuple), 0);
+		
+		HASH_FIND_INT(tcp_hash, &c, tcp_hash_tmp);
+		if (tcp_hash_tmp == NULL) {
+			tcp_hash_tmp = (struct s_tcp_hash*)malloc(sizeof(struct s_tcp_hash));
+			tcp_hash_tmp->tcpkey = c;
+			tcp_hash_tmp->info = tcp_info;
+			HASH_ADD_INT(tcp_hash, tcpkey, tcp_hash_tmp);
 		}
-	    }
-	    
-	    if(!tcp_entry) { // then connection has vanished;
-			     // add residual cid info
-	    Chk(estats_connection_info_new(&conninfo));
+	}
+	
+	// similart to the above but with the inclusion of the inode number
+	Chk(_estats_get_ino_list(&ino_head));
+	estats_list_for_each(&ino_head, ino_info, list) {
+		c = hashlittle(&ino_info->tuple, sizeof(ino_info->tuple), 0);
 
-	    conninfo->cid = tcp_info->cid;
-            conninfo->tuple = tcp_info->tuple;
-	    conninfo->pid = -1;
-            conninfo->uid = -1;
-            conninfo->state = -1;
-	    conninfo->ino = -1;
+		HASH_FIND_INT(ino_hash, &c, ino_hash_tmp);
+		if (ino_hash_tmp==NULL) {
+			ino_hash_tmp = (struct s_ino_hash*)malloc(sizeof(struct s_ino_hash));
+			ino_hash_tmp->inokey = c;
+			ino_hash_tmp->info = ino_info;
+			ino_hash_tmp->ino = ino_info->ino;
+			HASH_ADD_INT(ino_hash, inokey, ino_hash_tmp);
+		}
+	}
 
-            strncpy(conninfo->cmdline, "\0", 1);
+	// this is keyed on the inode number 
+	Chk(_estats_get_pid_list(&pid_head));
+	estats_list_for_each(&pid_head, pid_info, list) {
+		myino = pid_info->ino;
+		HASH_FIND_INT(pid_hash, &myino, pid_hash_tmp);
+		if (pid_hash_tmp==NULL) {
+			pid_hash_tmp = (struct s_pid_hash*)malloc(sizeof(struct s_pid_hash));
+			pid_hash_tmp->ino = myino;
+			pid_hash_tmp->info = pid_info;
+			HASH_ADD_INT(pid_hash, ino, pid_hash_tmp);
+		}
+	}
+	
 
-            list_add_tail(head, &conninfo->list);
-	    }
+	// iterate over the tcp connections looking for a match in the keys of the
+	// ino hash. for each match we want to get the necessary information from the pid hash
+	
+	for (tcp_hash_tmp = tcp_hash; tcp_hash_tmp != NULL; tcp_hash_tmp=tcp_hash_tmp->hh.next) {
+		HASH_FIND_INT(ino_hash, &tcp_hash_tmp->tcpkey, ino_hash_tmp);
+		if (ino_hash_tmp != NULL) {
+			// the tuples match now check to see if the ino numbers match
+			myino = ino_hash_tmp->ino;
+			HASH_FIND_INT(pid_hash, &myino, pid_hash_tmp);
+			if (pid_hash_tmp != NULL) {
+				// a corresponding inode was found in the process table
+				// so we can now grab the command line
+				Chk(estats_connection_info_new(&conninfo));
+				conninfo->pid = pid_hash_tmp->info->pid;
+				strncpy(conninfo->cmdline, pid_hash_tmp->info->cmdline,
+					sizeof(pid_hash_tmp->info->cmdline));
+				conninfo->uid = ino_hash_tmp->info->uid;
+				conninfo->state = ino_hash_tmp->info->state;
+				conninfo->cid = tcp_hash_tmp->info->cid;
+				conninfo->tuple = tcp_hash_tmp->info->tuple;
+				conninfo->ino = ino_hash_tmp->info->ino;
+				list_add_tail(head, &conninfo->list);
+			} else {
+				// we did not find the inode in the process table
+				// so we leave the command line blank
+				Chk(estats_connection_info_new(&conninfo));
+				conninfo->pid = -1;
+				conninfo->uid = ino_hash_tmp->info->uid;
+				conninfo->state = ino_hash_tmp->info->state;
+				conninfo->cid = tcp_hash_tmp->info->cid;
+				conninfo->tuple = tcp_hash_tmp->info->tuple;
+				if (ino_hash_tmp->info->ino) conninfo->ino = ino_hash_tmp->info->ino;
+				else conninfo->ino = -1;
+				strncpy(conninfo->cmdline, "\0", 1);
+				list_add_tail(head, &conninfo->list);
+			}
+		} else {
+			// no match for the tuples so the connection vanished
+			// add the residual cid information and be done with it
+			Chk(estats_connection_info_new(&conninfo));
+			conninfo->cid = tcp_hash_tmp->info->cid;
+			conninfo->tuple = tcp_hash_tmp->info->tuple;
+			conninfo->pid = -1;
+			conninfo->uid = -1;
+			conninfo->state = -1;
+			conninfo->ino = -1;
+			strncpy(conninfo->cmdline, "\0", 1);
+			list_add_tail(head, &conninfo->list);
+		}
 	}
 
 Cleanup:
 
-	list_for_each_safe(&tcp_head, tcp_info, tmp, list) {
-		list_del(&tcp_info->list);
-		free(tcp_info);
+	/* we have to free all of the hashes now */
+	HASH_ITER(hh, pid_hash, pid_hash_tmp, pid_hash_del) {
+		HASH_DEL(pid_hash, pid_hash_tmp);  /* delete and advance to next */
+		free(pid_hash_tmp);            
 	}
 
-	list_for_each_safe(&ino_head, ino_info, tmp, list) {
-		list_del(&ino_info->list);
-		free(ino_info);
+	HASH_ITER(hh, ino_hash, ino_hash_tmp, ino_hash_del) {
+		HASH_DEL(ino_hash, ino_hash_tmp);  
+		free(ino_hash_tmp);            
 	}
 
-	list_for_each_safe(&pid_head, pid_info, tmp, list) {
-		list_del(&pid_info->list);
-		free(pid_info);
+	HASH_ITER(hh, tcp_hash, tcp_hash_tmp, tcp_hash_del) {
+		HASH_DEL(tcp_hash, tcp_hash_tmp);  
+		free(tcp_hash_tmp);            
 	}
-	
+
 	return err;
 }
 

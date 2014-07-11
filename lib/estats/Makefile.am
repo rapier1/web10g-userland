@@ -35,6 +35,7 @@ estats_c_sources = \
 	nl-client.c \
 	val.c \
 	var.c \
+	lookup3.c \
 	record.c
 
 # cpp flags to be used with all compilation
