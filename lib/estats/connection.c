@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2014 The Board of Trustees of the University of Illinois,
- *                    Carnegie Mellon University.
+ *		      Carnegie Mellon University.
  *
  *
  * This library is free software; you can redistribute it and/or modify it
@@ -18,7 +18,7 @@
  * lookup3.c, by Bob Jenkins, May 2006, Public Domain.
  */
 /* hash table function provided by uthash by
- * Copyright (c) 2003-2014, Troy D. Hanson     http://troydhanson.github.com/uthash/
+ * Copyright (c) 2003-2014, Troy D. Hanson http://troydhanson.github.com/uthash/
  * All rights reserved.
  *
  */
@@ -41,7 +41,7 @@ estats_connection_list_new(struct estats_connection_list** connection_list)
 	list_head_init(&((*connection_list)->connection_info_head));
 
  Cleanup:
- 	return err;
+	return err;
 }
 
 void
@@ -80,7 +80,7 @@ estats_connection_info_new(struct estats_connection_info** connection_info)
 	memset((void*) *connection_info, 0, sizeof(estats_connection_info));
 
  Cleanup:
- 	return err;
+	return err;
 }
 
 void
@@ -95,49 +95,53 @@ estats_connection_info_free(struct estats_connection_info** connection_info)
 
 struct estats_error*
 estats_connection_tuple_compare(int* res,
-                               const struct estats_connection_tuple *s1,
-                               const struct estats_connection_tuple *s2)
+				const struct estats_connection_tuple *s1,
+				const struct estats_connection_tuple *s2)
 {
 	estats_error* err = NULL;
-
+	
 	ErrIf(s1 == NULL || s2 == NULL, ESTATS_ERR_INVAL);
-
+	
 	*res = 1;
-
+	
 	if ( (s1->addr_type == s2->addr_type) &&
-		(s1->rem_port == s2->rem_port) &&
-        	strcmp((char *)(s1->rem_addr), (char *)(s2->rem_addr)) == 0 &&
-         	(s1->local_port == s2->local_port) &&
-         	strcmp((char *)(s1->local_addr), (char *)(s2->local_addr)) == 0 ) {
-
-	*res = 0;
+	     (s1->rem_port == s2->rem_port) &&
+	     strcmp((char *)(s1->rem_addr), (char *)(s2->rem_addr)) == 0 &&
+	     (s1->local_port == s2->local_port) &&
+	     strcmp((char *)(s1->local_addr), (char *)(s2->local_addr)) == 0 ) {
+		*res = 0;
 	}
-
+	
 Cleanup:
 	return err;
 }
 
 struct estats_error*
-estats_connection_tuple_as_strings(struct estats_connection_tuple_ascii* tuple_ascii, struct estats_connection_tuple* tuple)
+estats_connection_tuple_as_strings(struct estats_connection_tuple_ascii* tuple_ascii, 
+				   struct estats_connection_tuple* tuple)
 {
 	estats_error* err = NULL;
-
+	
 	ErrIf(tuple_ascii == NULL || tuple == NULL, ESTATS_ERR_INVAL);
-
+	
 	Chk(Sprintf(NULL, tuple_ascii->rem_port, "%u", tuple->rem_port));
 	Chk(Sprintf(NULL, tuple_ascii->local_port, "%u", tuple->local_port));
 	Chk(Sprintf(NULL, tuple_ascii->cid, "%d", tuple->cid));
-
+	
 	if (tuple->addr_type == ESTATS_ADDRTYPE_IPV4) {
-        	Chk(Inet_ntop(AF_INET, (void*) (tuple->rem_addr), tuple_ascii->rem_addr, INET_ADDRSTRLEN));
-        	Chk(Inet_ntop(AF_INET, (void*) (tuple->local_addr), tuple_ascii->local_addr, INET_ADDRSTRLEN));
+		Chk(Inet_ntop(AF_INET, (void*) (tuple->rem_addr), 
+			      tuple_ascii->rem_addr, INET_ADDRSTRLEN));
+		Chk(Inet_ntop(AF_INET, (void*) (tuple->local_addr), 
+			      tuple_ascii->local_addr, INET_ADDRSTRLEN));
 	}
 	else if (tuple->addr_type == ESTATS_ADDRTYPE_IPV6) {
-        	Chk(Inet_ntop(AF_INET6, (void*) (tuple->rem_addr), tuple_ascii->rem_addr, INET6_ADDRSTRLEN));
-        	Chk(Inet_ntop(AF_INET6, (void*) (tuple->local_addr), tuple_ascii->local_addr, INET6_ADDRSTRLEN));
+		Chk(Inet_ntop(AF_INET6, (void*) (tuple->rem_addr), 
+			      tuple_ascii->rem_addr, INET6_ADDRSTRLEN));
+		Chk(Inet_ntop(AF_INET6, (void*) (tuple->local_addr), 
+			      tuple_ascii->local_addr, INET6_ADDRSTRLEN));
 	}
 	else Err(ESTATS_ERR_ADDR_TYPE); 
-
+	
 Cleanup:
     return err;
 }
@@ -191,7 +195,8 @@ Cleanup:
 }
 
 estats_error*
-estats_connection_info_get_tuple(struct estats_connection_tuple* tuple, const estats_connection_info* connection_info)
+estats_connection_info_get_tuple(struct estats_connection_tuple* tuple, 
+				 const estats_connection_info* connection_info)
 {
 	estats_error* err = NULL;
 
@@ -203,10 +208,8 @@ Cleanup:
 	return err;
 }
 
-static struct estats_error* _estats_get_tcp_list(struct list_head*, const struct estats_connection_list*);
-static struct estats_error* _estats_get_ino_list(struct list_head*);
-static struct estats_error* _estats_get_pid_list(struct list_head*);
 
+// the following struct and functions defines are private
 struct s_tcp_hash {
 	uint32_t tcpkey;
 	struct estats_connection_info* info;
@@ -226,6 +229,15 @@ struct s_pid_hash {
 	UT_hash_handle hh;
 };
 
+static struct estats_error* _estats_get_tcp_list(const struct estats_connection_list*,
+						 struct s_tcp_hash**);
+
+static struct estats_error* _estats_get_ino_list(struct s_ino_hash**);
+
+static struct estats_error* _estats_get_pid_list(struct s_pid_hash**);
+
+
+
 /* create a series of hashes and compare the overlapping information
  * to extract extra information like the command line, PID and UID */
 struct estats_error*
@@ -233,12 +245,6 @@ estats_connection_list_add_info(struct estats_connection_list* connection_list)
 {
 	estats_error* err = NULL;
 	struct list_head* head;
-	struct list_head tcp_head;
-	struct list_head ino_head;
-	struct list_head pid_head;
-	estats_connection_info* tcp_info;
-	estats_connection_info* ino_info;
-	estats_connection_info* pid_info;
 	estats_connection_info* conninfo;
 	estats_connection_info* tmp_ptr;	
 	int myino = 0;
@@ -260,50 +266,12 @@ estats_connection_list_add_info(struct estats_connection_list* connection_list)
 
 	head = &connection_list->connection_info_head;
 
-	// go through each tcp connection we know about and create a key based on
-	// a simple concatonation of the tuple information
-	// insert that into the hash with the tcp information as the value for that key
-	Chk(_estats_get_tcp_list(&tcp_head, connection_list));
-	estats_list_for_each(&tcp_head, tcp_info, list) {
-		c = hashlittle(&tcp_info->tuple, sizeof(tcp_info->tuple), 0);
-		
-		HASH_FIND_INT(tcp_hash, &c, tcp_hash_tmp);
-		if (tcp_hash_tmp == NULL) {
-			tcp_hash_tmp = (struct s_tcp_hash*)malloc(sizeof(struct s_tcp_hash));
-			tcp_hash_tmp->tcpkey = c;
-			tcp_hash_tmp->info = tcp_info;
-			HASH_ADD_INT(tcp_hash, tcpkey, tcp_hash_tmp);
-		}
-	}
-	
-	// similart to the above but with the inclusion of the inode number
-	Chk(_estats_get_ino_list(&ino_head));
-	estats_list_for_each(&ino_head, ino_info, list) {
-		c = hashlittle(&ino_info->tuple, sizeof(ino_info->tuple), 0);
+	// the full list of all the necessary network data and return a hash of the data. 
+	Chk(_estats_get_tcp_list(connection_list, &tcp_hash));
 
-		HASH_FIND_INT(ino_hash, &c, ino_hash_tmp);
-		if (ino_hash_tmp==NULL) {
-			ino_hash_tmp = (struct s_ino_hash*)malloc(sizeof(struct s_ino_hash));
-			ino_hash_tmp->inokey = c;
-			ino_hash_tmp->info = ino_info;
-			ino_hash_tmp->ino = ino_info->ino;
-			HASH_ADD_INT(ino_hash, inokey, ino_hash_tmp);
-		}
-	}
+	Chk(_estats_get_ino_list(&ino_hash));
 
-	// this is keyed on the inode number 
-	Chk(_estats_get_pid_list(&pid_head));
-	estats_list_for_each(&pid_head, pid_info, list) {
-		myino = pid_info->ino;
-		HASH_FIND_INT(pid_hash, &myino, pid_hash_tmp);
-		if (pid_hash_tmp==NULL) {
-			pid_hash_tmp = (struct s_pid_hash*)malloc(sizeof(struct s_pid_hash));
-			pid_hash_tmp->ino = myino;
-			pid_hash_tmp->info = pid_info;
-			HASH_ADD_INT(pid_hash, ino, pid_hash_tmp);
-		}
-	}
-	
+	Chk(_estats_get_pid_list(&pid_hash));
 
 	// iterate over the tcp connections looking for a match in the keys of the
 	// ino hash. for each match we want to get the necessary information from the pid hash
@@ -336,8 +304,10 @@ estats_connection_list_add_info(struct estats_connection_list* connection_list)
 				conninfo->state = ino_hash_tmp->info->state;
 				conninfo->cid = tcp_hash_tmp->info->cid;
 				conninfo->tuple = tcp_hash_tmp->info->tuple;
-				if (ino_hash_tmp->info->ino) conninfo->ino = ino_hash_tmp->info->ino;
-				else conninfo->ino = -1;
+				if (ino_hash_tmp->info->ino) 
+					conninfo->ino = ino_hash_tmp->info->ino;
+				else 
+					conninfo->ino = -1;
 				strncpy(conninfo->cmdline, "\0", 1);
 				list_add_tail(head, &conninfo->list);
 			}
@@ -361,74 +331,83 @@ Cleanup:
 	/* we have to free all of the hashes now */
 	HASH_ITER(hh, pid_hash, pid_hash_tmp, pid_hash_del) {
 		HASH_DEL(pid_hash, pid_hash_tmp);  /* delete and advance to next */
-		free(pid_hash_tmp);            
+		free(pid_hash_tmp->info);
+		free(pid_hash_tmp);	       
 	}
 
 	HASH_ITER(hh, ino_hash, ino_hash_tmp, ino_hash_del) {
 		HASH_DEL(ino_hash, ino_hash_tmp);  
-		free(ino_hash_tmp);            
+		free(ino_hash_tmp->info);
+		free(ino_hash_tmp);	       
 	}
 
 	HASH_ITER(hh, tcp_hash, tcp_hash_tmp, tcp_hash_del) {
 		HASH_DEL(tcp_hash, tcp_hash_tmp);  
-		free(tcp_hash_tmp);            
+		free(tcp_hash_tmp->info);
+		free(tcp_hash_tmp);	       
 	}
 
-        list_for_each_safe(&tcp_head, tcp_info, tmp_ptr, list) {
-                list_del(&tcp_info->list);
-                free(tcp_info);
-        }
-
-        list_for_each_safe(&ino_head, ino_info, tmp_ptr, list) {
-                list_del(&ino_info->list);
-                free(ino_info);
-        }
-
-        list_for_each_safe(&pid_head, pid_info, tmp_ptr, list) {
-                list_del(&pid_info->list);
-                free(pid_info);
-        }
-        
 	return err;
 }
 
+// get a full list of all of our tcp connections
 static struct estats_error*
-_estats_get_tcp_list(struct list_head* head, const estats_connection_list* connection_list)
+_estats_get_tcp_list(const estats_connection_list* connection_list, struct s_tcp_hash **tcp_hash )
 {
 	estats_error* err = NULL;
 	const struct list_head* connection_head;
 	struct estats_connection* conn;
 	struct list_node* pos;
+	struct s_tcp_hash* tcp_hash_tmp;
+	struct s_tcp_hash* tcp_hash_chk;
 	int i;
+	uint32_t c;
 
-	ErrIf(head == NULL || connection_list == NULL, ESTATS_ERR_INVAL);
-	list_head_init(head);
+	ErrIf(connection_list == NULL, ESTATS_ERR_INVAL);
 	
 	connection_head = &connection_list->connection_head;
 
 	estats_list_for_each(connection_head, conn, list) {
 
-		estats_connection_info* conninfo;
-		Chk(estats_connection_info_new(&conninfo));
+		tcp_hash_tmp = (struct s_tcp_hash*)malloc(sizeof(struct s_tcp_hash));
+		Chk(estats_connection_info_new(&tcp_hash_tmp->info));
 
-		conninfo->cid = conn->cid;
+		tcp_hash_tmp->info->cid = conn->cid;
+		
 		for (i = 0; i < 16; i++)
-			conninfo->tuple.rem_addr[i] = conn->rem_addr[i];
+			tcp_hash_tmp->info->tuple.rem_addr[i] = conn->rem_addr[i];
 		for (i = 0; i < 16; i++)
-			conninfo->tuple.local_addr[i] = conn->local_addr[i];
-		conninfo->tuple.rem_port = conn->rem_port;
-		conninfo->tuple.local_port = conn->local_port;
-		conninfo->tuple.addr_type = conn->addr_type;
+			tcp_hash_tmp->info->tuple.local_addr[i] = conn->local_addr[i];
+		tcp_hash_tmp->info->tuple.rem_port = conn->rem_port;
+		tcp_hash_tmp->info->tuple.local_port = conn->local_port;
+		tcp_hash_tmp->info->tuple.addr_type = conn->addr_type;
 
-		list_add_tail(head, &conninfo->list);
+
+		// create a unique non-cryptographic hash of the tuple information
+		c = hashlittle(&tcp_hash_tmp->info->tuple, sizeof(tcp_hash_tmp->info->tuple), 0); 
+
+		// add information to our hash table here (depends on uthash.h)
+		HASH_FIND_INT(*tcp_hash, &c, tcp_hash_chk); // see if the entry already exists
+		if (tcp_hash_chk == NULL) { // if not then create it and add the data
+			tcp_hash_tmp->tcpkey = c;
+			HASH_ADD_INT(*tcp_hash, tcpkey, tcp_hash_tmp);
+		} else {
+			// an entry with this tuple hash exists
+			// which makes me feel like i'm taking crazy pill
+			// so free the structs! FREE THEM!!!
+			free(tcp_hash_tmp->info);
+			free(tcp_hash_tmp);
+		}
+
 	}
 
+
  Cleanup:
- 	return err;
+	return err;
 }
 
 static struct estats_error*
-_estats_get_ino_list(struct list_head* head)
+_estats_get_ino_list(struct s_ino_hash** ino_hash)
 {
 	estats_error* err = NULL;
 	FILE* file = NULL;
@@ -436,88 +415,109 @@ _estats_get_ino_list(struct list_head* head)
 	char buf[256];
 	int scan;
 	struct in6_addr in6;
-
-	ErrIf(head == NULL, ESTATS_ERR_INVAL);
-	list_head_init(head);
-
+	struct s_ino_hash* ino_hash_tmp;
+	struct s_ino_hash* ino_hash_chk;
+	uint32_t c;
+	
 	file = fopen("/proc/net/tcp", "r");
 	file6 = fopen("/proc/net/tcp6", "r");
 
 	if (file) {
-		estats_connection_info* conninfo;
 
 		while (fgets(buf, sizeof(buf), file) != NULL) {
 
-			Chk(estats_connection_info_new(&conninfo));
+			ino_hash_tmp = (struct s_ino_hash*)malloc(sizeof(struct s_ino_hash));
+			Chk(estats_connection_info_new(&ino_hash_tmp->info));
 
 			if ((scan = sscanf(buf,
 				"%*u: %x:%hx %x:%hx %x %*x:%*x %*x:%*x %*x %u %*u %lu",
-				(uint32_t *) &(conninfo->tuple.local_addr),
-				(uint16_t *) &(conninfo->tuple.local_port),
-				(uint32_t *) &(conninfo->tuple.rem_addr),
-				(uint16_t *) &(conninfo->tuple.rem_port),
-				(int *) &(conninfo->state),
-				(uid_t *) &(conninfo->uid),
-				(ino_t *) &(conninfo->ino)
+					   (uint32_t *) &(ino_hash_tmp->info->tuple.local_addr),
+					   (uint16_t *) &(ino_hash_tmp->info->tuple.local_port),
+					   (uint32_t *) &(ino_hash_tmp->info->tuple.rem_addr),
+					   (uint16_t *) &(ino_hash_tmp->info->tuple.rem_port),
+					   (int *) &(ino_hash_tmp->info->state),
+				(uid_t *) &(ino_hash_tmp->info->uid),
+				(ino_t *) &(ino_hash_tmp->info->ino)
 				)) == 7) {
 
-				conninfo->tuple.addr_type = ESTATS_ADDRTYPE_IPV4;
-				list_add_tail(head, &conninfo->list);
-
+				ino_hash_tmp->info->tuple.addr_type = ESTATS_ADDRTYPE_IPV4;
+				
+				// see _estats_get_tcp_list for comments on the following line
+				c = hashlittle(&ino_hash_tmp->info->tuple, sizeof(ino_hash_tmp->info->tuple), 0);
+				
+				HASH_FIND_INT(*ino_hash, &c, ino_hash_chk);
+				if (ino_hash_chk==NULL) {
+					ino_hash_tmp->inokey = c;
+					ino_hash_tmp->ino = ino_hash_tmp->info->ino;
+					HASH_ADD_INT(*ino_hash, inokey, ino_hash_tmp);
+				} else {
+					free(ino_hash_tmp->info);
+					free(ino_hash_tmp);
+				}
 			} else {
-				estats_connection_info_free(&conninfo);
+				free(ino_hash_tmp->info);
+				free(ino_hash_tmp);				
 			}
 		}
 		fclose(file);
 	}
 	
-    	if (file6) { 
-		estats_connection_info* conninfo;
+	if (file6) { 
 		char local_addr[INET6_ADDRSTRLEN];
 		char rem_addr[INET6_ADDRSTRLEN];
 
 		while (fgets(buf, sizeof(buf), file6) != NULL) {
 
-			Chk(estats_connection_info_new(&conninfo));
+			ino_hash_tmp = (struct s_ino_hash*)malloc(sizeof(struct s_ino_hash));
+			Chk(estats_connection_info_new(&ino_hash_tmp->info));
 
 			if ((scan = sscanf(buf,
 				"%*u: %64[0-9A-Fa-f]:%hx %64[0-9A-Fa-f]:%hx %x %*x:%*x %*x:%*x %*x %u %*u %u", 
 				(char *) &local_addr,
-				(uint16_t *) &(conninfo->tuple.local_port),
+				(uint16_t *) &(ino_hash_tmp->info->tuple.local_port),
 				(char *) &rem_addr,
-				(uint16_t *) &(conninfo->tuple.rem_port),
-				(int *) &(conninfo->state),
-				(uid_t *) &(conninfo->uid),
-				(pid_t *) &(conninfo->ino)
+				(uint16_t *) &(ino_hash_tmp->info->tuple.rem_port),
+				(int *) &(ino_hash_tmp->info->state),
+				(uid_t *) &(ino_hash_tmp->info->uid),
+				(pid_t *) &(ino_hash_tmp->info->ino)
 				)) == 7) {
 				
-				sscanf(local_addr, "%8x%8x%8x%8x", &in6.s6_addr32[0], &in6.s6_addr32[1], &in6.s6_addr32[2], &in6.s6_addr32[3]); 
+				sscanf(local_addr, "%8x%8x%8x%8x", &in6.s6_addr32[0], 
+				       &in6.s6_addr32[1], &in6.s6_addr32[2], &in6.s6_addr32[3]); 
+				memcpy(&(ino_hash_tmp->info->tuple.local_addr), &in6.s6_addr, 16);
+				sscanf(rem_addr, "%8x%8x%8x%8x", &in6.s6_addr32[0], 
+				       &in6.s6_addr32[1], &in6.s6_addr32[2], &in6.s6_addr32[3]);
+				memcpy(&(ino_hash_tmp->info->tuple.rem_addr), &in6.s6_addr, 16);
+				ino_hash_tmp->info->tuple.addr_type = ESTATS_ADDRTYPE_IPV6;
 
-                		memcpy(&(conninfo->tuple.local_addr), &in6.s6_addr, 16);
-
-				sscanf(rem_addr, "%8x%8x%8x%8x", &in6.s6_addr32[0], &in6.s6_addr32[1], &in6.s6_addr32[2], &in6.s6_addr32[3]);
-
-                		memcpy(&(conninfo->tuple.rem_addr), &in6.s6_addr, 16);
-
-				conninfo->tuple.addr_type = ESTATS_ADDRTYPE_IPV6;
-				list_add_tail(head, &conninfo->list);
-
+				c = hashlittle(&ino_hash_tmp->info->tuple, sizeof(ino_hash_tmp->info->tuple), 0);
+				
+				// see _estats_get_tcp_list for comments on the following line
+				HASH_FIND_INT(*ino_hash, &c, ino_hash_chk);
+				if (ino_hash_chk==NULL) {
+					ino_hash_tmp->inokey = c;
+					ino_hash_tmp->ino = ino_hash_tmp->info->ino;
+					HASH_ADD_INT(*ino_hash, inokey, ino_hash_tmp);
+				} else {
+					free(ino_hash_tmp->info);
+					free(ino_hash_tmp);
+				}
 			} else {
-				estats_connection_info_free(&conninfo);
-	    		}
-       		}
+				free(ino_hash_tmp->info);
+				free(ino_hash_tmp);
+			} 
+		}
 		fclose(file6);
 	} 
 
  Cleanup:
- 	return err;
+	return err;
 }
 
 static struct estats_error*
-_estats_get_pid_list(struct list_head* head)
+_estats_get_pid_list(struct s_pid_hash **pid_hash)
 {
 	estats_error* err = NULL;
-	estats_connection_info* conninfo;
 	DIR *dir, *fddir;
 	struct dirent *direntp, *fddirentp;
 	pid_t pid;
@@ -526,61 +526,57 @@ _estats_get_pid_list(struct list_head* head)
 	struct stat st;
 	int stno;
 	FILE* file;
-
-	ErrIf(head == NULL, ESTATS_ERR_INVAL);
-	list_head_init(head);
+	struct s_pid_hash* pid_hash_tmp = NULL;
+	struct s_pid_hash* pid_hash_chk = NULL;
+	uint32_t c;
+	char tmpcmdline[16] = "\0";
 
 	Chk(Opendir(&dir, "/proc"));
 
 	while ((direntp = readdir(dir)) != NULL) {
 		if ((pid = atoi(direntp->d_name)) != 0) {
-
-			sprintf(path, "%s/%d/%s/", "/proc", pid, "fd"); 
-
-			if ((fddir = opendir(path)) != NULL) { //else lacks permissions 
-	     
-			while ((fddirentp = readdir(fddir)) != NULL) { 
-
-		    	strcpy(buf, path);
-		    	strcat(buf, fddirentp->d_name); 
-		    	stno = stat(buf, &st); 
-
-		    	if (S_ISSOCK(st.st_mode)) { // add new list entry
-
-			sprintf(buf, "/proc/%d/status", pid);
-
-			if ((file = fopen(buf, "r")) == NULL)
-				continue;
-
-			if (fgets(buf, sizeof(buf), file) == NULL)
-			    	goto FileCleanup; 
-       	
-	                Chk(estats_connection_info_new(&conninfo));
-
-			if (sscanf(buf, "Name: %16s\n",
-				   conninfo->cmdline) != 1) {
-
-			    estats_connection_info_free(&conninfo);
-			    goto FileCleanup;
-		       	}
-
-			conninfo->ino = st.st_ino;
-		       	conninfo->pid = pid;
-                        list_add_tail(head, &conninfo->list);
-
- FileCleanup:
-			fclose(file); 
-		    	}
-	       		}
-	       		closedir(fddir);
-	    		}
-       		}
-    	}
-    	closedir(dir);
-
- Cleanup:
-    return err;
+                        sprintf(path, "%s/%d/%s/", "/proc", pid, "fd"); 
+                        if ((fddir = opendir(path)) != NULL) { //else lacks permissions 
+				while ((fddirentp = readdir(fddir)) != NULL) { 
+					strcpy(buf, path);
+					strcat(buf, fddirentp->d_name); 
+					stno = stat(buf, &st); 
+					if (S_ISSOCK(st.st_mode)) { // add new list entry
+						
+						// we do this so we don't open status multiple 
+						// times if a applications has multiple sockets. 
+						if (!tmpcmdline[0]) {
+							sprintf(buf, "/proc/%d/status", pid);
+							if ((file = fopen(buf, "r")) == NULL)
+								continue;
+							if (fgets(buf, sizeof(buf), file) == NULL){
+								continue;
+								fclose(file); 
+							}
+							if (sscanf(buf, "Name: %16s\n", tmpcmdline) != 1) {
+								fclose(file); 
+								continue;
+							}
+							fclose(file);
+						}
+						HASH_FIND_INT(*pid_hash, &st.st_ino, pid_hash_tmp);
+						if (pid_hash_tmp == NULL) {
+							pid_hash_tmp = (struct s_pid_hash*)malloc(sizeof(struct s_pid_hash));
+							Chk(estats_connection_info_new(&pid_hash_tmp->info));
+							strcpy(pid_hash_tmp->info->cmdline, tmpcmdline);
+							pid_hash_tmp->info->ino = st.st_ino;
+							pid_hash_tmp->info->pid = pid;
+							pid_hash_tmp->ino = st.st_ino;
+							HASH_ADD_INT(*pid_hash, ino, pid_hash_tmp);
+						} 
+					}
+				}
+				closedir(fddir);
+				tmpcmdline[0] = '\0';
+			}
+		}
+	}
+	closedir(dir);
+Cleanup:
+	return err;
 }
-
-
-
