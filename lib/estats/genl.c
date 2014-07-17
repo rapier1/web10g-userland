@@ -354,44 +354,44 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
                         return MNL_CB_ERROR;
                 }
                 break;
-        case NLE_ATTR_PERF_VARS:
+        case NLE_ATTR_PERF_VALS:
                 if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_PERF\n");
                         return MNL_CB_ERROR;
                 }
                 break;
-        case NLE_ATTR_PATH_VARS:
+        case NLE_ATTR_PATH_VALS:
                 if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_PATH\n");
                         return MNL_CB_ERROR;
                 }
                 break;
-        case NLE_ATTR_STACK_VARS:
+        case NLE_ATTR_STACK_VALS:
                 if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_STACK\n");
                         return MNL_CB_ERROR;
                 }
                 break;
-        case NLE_ATTR_APP_VARS:
+        case NLE_ATTR_APP_VALS:
                 if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_APP\n");
                         return MNL_CB_ERROR;
                 }
                 break;
-        case NLE_ATTR_TUNE_VARS:
+        case NLE_ATTR_TUNE_VALS:
                 if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_TUNE\n");
                         return MNL_CB_ERROR;
                 }
                 break;
-        case NLE_ATTR_EXTRAS_VARS:
+        case NLE_ATTR_EXTRAS_VALS:
                 if (mnl_attr_validate(attr, MNL_TYPE_NESTED) < 0) {
                         dbgprintf("mnl_attr_validate NLE_ATTR_EXTRAS\n");
                         return MNL_CB_ERROR;
                 }
                 break;
           default:
-            fprintf(stderr, "DEBUG: unknown type: %d.\n", type);
+            fprintf(stderr, "DEBUG: data_attr_cb(): unknown type: %d.\n", type);
         }
         tb[type] = attr;
 
@@ -419,23 +419,23 @@ static int data_cb(const struct nlmsghdr *nlh, void *data)
         if (tb[NLE_ATTR_TIME]) {
                 parse_time(tb[NLE_ATTR_TIME], NULL);
         }
-        if (tb[NLE_ATTR_PERF_VARS]) {
-                parse_table(tb[NLE_ATTR_PERF_VARS], PERF_TABLE);
+        if (tb[NLE_ATTR_PERF_VALS]) {
+                parse_table(tb[NLE_ATTR_PERF_VALS], PERF_TABLE);
         }
-        if (tb[NLE_ATTR_PATH_VARS]) {
-                parse_table(tb[NLE_ATTR_PATH_VARS], PATH_TABLE);
+        if (tb[NLE_ATTR_PATH_VALS]) {
+                parse_table(tb[NLE_ATTR_PATH_VALS], PATH_TABLE);
         }
-        if (tb[NLE_ATTR_STACK_VARS]) {
-                parse_table(tb[NLE_ATTR_STACK_VARS], STACK_TABLE);
+        if (tb[NLE_ATTR_STACK_VALS]) {
+                parse_table(tb[NLE_ATTR_STACK_VALS], STACK_TABLE);
         }
-        if (tb[NLE_ATTR_APP_VARS]) {
-                parse_table(tb[NLE_ATTR_APP_VARS], APP_TABLE);
+        if (tb[NLE_ATTR_APP_VALS]) {
+                parse_table(tb[NLE_ATTR_APP_VALS], APP_TABLE);
         }
-        if (tb[NLE_ATTR_TUNE_VARS]) {
-                parse_table(tb[NLE_ATTR_TUNE_VARS], TUNE_TABLE);
+        if (tb[NLE_ATTR_TUNE_VALS]) {
+                parse_table(tb[NLE_ATTR_TUNE_VALS], TUNE_TABLE);
         }
-        if (tb[NLE_ATTR_EXTRAS_VARS]) {
-                parse_table(tb[NLE_ATTR_EXTRAS_VARS], EXTRAS_TABLE);
+        if (tb[NLE_ATTR_EXTRAS_VALS]) {
+                parse_table(tb[NLE_ATTR_EXTRAS_VALS], EXTRAS_TABLE);
         }
  
         return MNL_CB_OK;

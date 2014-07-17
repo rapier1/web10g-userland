@@ -57,6 +57,7 @@ int main(int argc, char **argv)
         mask.masks[2] = DEFAULT_STACK_MASK;
         mask.masks[3] = DEFAULT_APP_MASK;
         mask.masks[4] = DEFAULT_TUNE_MASK;
+        mask.masks[5] = DEFAULT_EXTRAS_MASK;
 
         for (i = 0; i < MAX_TABLE; i++) {
                 mask.if_mask[i] = 0;
@@ -123,6 +124,8 @@ int main(int argc, char **argv)
 			printf("\n\n App Table\n\n");
 		if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX+APP_INDEX_MAX)
 			printf("\n\n Tune Table\n\n");
+		if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX+APP_INDEX_MAX+TUNE_INDEX_MAX)
+			printf("\n\n Extras Table\n\n");
 
 
 		if (data->val[j].masked) continue;
