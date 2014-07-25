@@ -173,7 +173,7 @@ static inline void list_head_init(struct list_head *h)
 }
 
 /**
- * list_add - add an entry at the start of a linked list.
+ * list_add_head - add an entry at the start of a linked list.
  * @h: the list_head to add the node to
  * @n: the list_node to add to the list.
  *
@@ -182,10 +182,10 @@ static inline void list_head_init(struct list_head *h)
  *	struct child *child = malloc(sizeof(*child));
  *
  *	child->name = "marvin";
- *	list_add(&parent->children, &child->list);
+ *	list_add_head(&parent->children, &child->list);
  *	parent->num_children++;
  */
-static inline void list_add(struct list_head *h, struct list_node *n)
+static inline void list_add_head(struct list_head *h, struct list_node *n)
 {
 	n->next = h->n.next;
 	n->prev = &h->n;
@@ -288,7 +288,7 @@ static inline const void *list_top_(const struct list_head *h, size_t off)
 }
 
 /**
- * list_pop - remove the first entry in a list
+ * list_pop_off - remove the first entry in a list
  * @h: the list_head
  * @type: the type of the entry
  * @member: the list_node member of the type
@@ -301,7 +301,7 @@ static inline const void *list_top_(const struct list_head *h, size_t off)
  *	if (!one)
  *		printf("Empty list!\n");
  */
-#define list_pop(h, type, member)					\
+#define list_pop_off(h, type, member)					\
 	((type *)list_pop_((h), list_off_(type, member)))
 
 static inline const void *list_pop_(const struct list_head *h, size_t off)
@@ -532,7 +532,7 @@ static inline void list_prepend_list(struct list_head *to,
 	((type *)list_tail_((h), (off)))
 
 #define list_add_off(h, n, off)                 \
-	list_add((h), list_node_from_off_((n), (off)))
+	list_add_head((h), list_node_from_off_((n), (off)))
 
 #define list_del_off(n, off)                    \
 	list_del(list_node_from_off_((n), (off)))
