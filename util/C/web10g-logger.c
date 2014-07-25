@@ -156,10 +156,7 @@ int main(int argc, char **argv)
 		/* active get connections */
 		Chk(estats_list_conns(clist, cl));
 
-		int max = 0;
-		int min = 0; 
 		list_for_each(&clist->connection_head, cp, list) {
-			max++;
 			struct estats_connection_tuple* ct = (struct estats_connection_tuple*) cp;
 
 			// this Chk macro doesn't go to Cleanup but to continue. 
@@ -207,12 +204,9 @@ int main(int argc, char **argv)
 			}
 
 			printf("\n");
-			min++;
  Continue:
 			while(0) {} /* make the compiler happy */
 		}
-
-		printf ("\nProcessed %d of %d connections\n\n", min, max);
 		usleep(interval * 1000);
 	}
 
