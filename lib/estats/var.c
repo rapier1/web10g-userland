@@ -17,7 +17,7 @@
 
 #define ESTATSVAR(_name_,_valtype_,_type_) (struct estats_var) { .name = #_name_, .valtype = ESTATS_##_valtype_, .type = ESTATS_TYPE_##_type_ }
 
-int max_index[MAX_TABLE] = { PERF_INDEX_MAX, PATH_INDEX_MAX, STACK_INDEX_MAX, APP_INDEX_MAX, TUNE_INDEX_MAX };
+int max_index[MAX_TABLE] = { PERF_INDEX_MAX, PATH_INDEX_MAX, STACK_INDEX_MAX, APP_INDEX_MAX, TUNE_INDEX_MAX, EXTRAS_INDEX_MAX };
 
 struct estats_var estats_var_array[TOTAL_NUM_VARS] = {
         ESTATSVAR(SegsOut,UNSIGNED32,COUNTER32),

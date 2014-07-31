@@ -847,6 +847,7 @@ estats_read_vars(struct estats_val_data* data, int cid, const estats_nl_client* 
         if (cl->mask.if_mask[2]) mnl_attr_put_u64(nlh, NEA_STACK_MASK, cl->mask.masks[2]);
         if (cl->mask.if_mask[3]) mnl_attr_put_u64(nlh, NEA_APP_MASK, cl->mask.masks[3]);
         if (cl->mask.if_mask[4]) mnl_attr_put_u64(nlh, NEA_TUNE_MASK, cl->mask.masks[4]);
+        if (cl->mask.if_mask[5]) mnl_attr_put_u64(nlh, NEA_EXTRAS_MASK, cl->mask.masks[5]);
 
         mnl_attr_nest_end(nlh, attrp);
 

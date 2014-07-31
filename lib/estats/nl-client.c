@@ -46,6 +46,7 @@ estats_nl_client_init(struct estats_nl_client** cl)
 	(*cl)->mask.masks[2] = DEFAULT_STACK_MASK;
 	(*cl)->mask.masks[3] = DEFAULT_APP_MASK;
 	(*cl)->mask.masks[4] = DEFAULT_TUNE_MASK;
+	(*cl)->mask.masks[5] = DEFAULT_EXTRAS_MASK;
 
 	for (i = 0; i < MAX_TABLE; i++) {
 		(*cl)->mask.if_mask[i] = 0;

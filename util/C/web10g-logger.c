@@ -76,6 +76,7 @@ int main(int argc, char **argv)
 	mask.masks[2] = DEFAULT_STACK_MASK;
 	mask.masks[3] = DEFAULT_APP_MASK;
 	mask.masks[4] = DEFAULT_TUNE_MASK;
+	mask.masks[5] = DEFAULT_EXTRAS_MASK;
 
 	unsigned int interval = 1000;
 	char exclude_ip[64];
@@ -126,7 +127,7 @@ int main(int argc, char **argv)
 		case 'm':
 			strmask = strdup(optarg);
 
-			for (i = 0; i < 5; i++) {
+			for (i = 0; i < MAX_TABLE; i++) {
 				char *strtmp;
 				strtmp = strsep(&strmask, &delim);
 				if (strtmp && strlen(strtmp)) {

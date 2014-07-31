@@ -1,18 +1,6 @@
 
 #ifndef ESTATS_MIB_VAR_H
 #define ESTATS_MIB_VAR_H
-/*
-enum MIB_TABLE {
-        PERF_TABLE,
-        PATH_TABLE,
-        STACK_TABLE,
-        APP_TABLE,
-        TUNE_TABLE,
-	EXTRAS_TABLE;
-        __MAX_TABLE
-};
-#define MAX_TABLE __MAX_TABLE
-*/
 extern int max_index[];
 
 static inline int single_index(int inda, int indb)
