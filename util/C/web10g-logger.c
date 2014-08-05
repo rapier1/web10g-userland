@@ -21,6 +21,7 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
+
 void usage(void)
 {
 	printf("\n\n");
@@ -63,7 +64,7 @@ int main(int argc, char **argv)
 	struct estats_connection* cp;
 	struct estats_connection_tuple_ascii asc;
 
-	int cid, i;
+	int cid, i; 
 	int opt;
 
 	char *strmask = NULL;
@@ -76,7 +77,6 @@ int main(int argc, char **argv)
 	mask.masks[2] = DEFAULT_STACK_MASK;
 	mask.masks[3] = DEFAULT_APP_MASK;
 	mask.masks[4] = DEFAULT_TUNE_MASK;
-	mask.masks[5] = DEFAULT_EXTRAS_MASK;
 
 	unsigned int interval = 1000;
 	char exclude_ip[64];
@@ -127,7 +127,7 @@ int main(int argc, char **argv)
 		case 'm':
 			strmask = strdup(optarg);
 
-			for (i = 0; i < MAX_TABLE; i++) {
+			for (i = 0; i < 5; i++) {
 				char *strtmp;
 				strtmp = strsep(&strmask, &delim);
 				if (strtmp && strlen(strtmp)) {
@@ -160,11 +160,8 @@ int main(int argc, char **argv)
 		list_for_each(&clist->connection_head, cp, list) {
 			struct estats_connection_tuple* ct = (struct estats_connection_tuple*) cp;
 
-			// this Chk macro doesn't go to Cleanup but to continue. 
-			// it also doesn't report the error directly as, for the most part,
-			// the genetlink library will report the error as well
-			Chk2Ign(estats_connection_tuple_as_strings(&asc, ct));
-			Chk2Ign(estats_read_vars(data, atoi(asc.cid), cl));
+			Chk2(estats_connection_tuple_as_strings(&asc, ct));
+			Chk2(estats_read_vars(data, atoi(asc.cid), cl));
 	
 			if (data->length == 0)
 				continue;
@@ -208,6 +205,7 @@ int main(int argc, char **argv)
  Continue:
 			while(0) {} /* make the compiler happy */
 		}
+
 		usleep(interval * 1000);
 	}
 

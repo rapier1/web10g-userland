@@ -23,7 +23,7 @@ estats_nl_client_init(struct estats_nl_client** cl)
 	int id;
 	int ret;
 	int i;
-	
+
 	ErrIf(cl == NULL, ESTATS_ERR_INVAL);
 	*cl = NULL;
 
@@ -63,8 +63,9 @@ estats_nl_client_destroy(struct estats_nl_client** cl)
 		return;
 
 	mnl_socket_close((*cl)->mnl_sock);
-
+	
 	free(*cl);
+
 	*cl = NULL;
 }
 
@@ -72,6 +73,7 @@ struct estats_error*
 estats_nl_client_set_mask(struct estats_nl_client* cl, struct estats_mask* mask)
 {
 	estats_error* err = NULL;
+	int i;
 
 	ErrIf(cl == NULL || mask == NULL, ESTATS_ERR_INVAL);
 

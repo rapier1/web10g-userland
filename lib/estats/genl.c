@@ -94,27 +94,21 @@ static void parse_table(struct nlattr *nested, int index)
         switch (index) {
         case PERF_TABLE:
                 ia.tb = tb_perf;
-
                 break;
         case PATH_TABLE:
                 ia.tb = tb_path;
-
                 break;
         case STACK_TABLE:
                 ia.tb = tb_stack;
-
                 break;
         case APP_TABLE:
                 ia.tb = tb_app;
-
                 break;
         case TUNE_TABLE:
                 ia.tb = tb_tune;
-
                 break;
         case EXTRAS_TABLE:
                 ia.tb = tb_extras;
-
                 break;
         }
 
@@ -130,24 +124,30 @@ static void parse_table(struct nlattr *nested, int index)
 
                         case ESTATS_UNSIGNED64: 
 				stat_val[j].uv64 = mnl_attr_get_u64(ia.tb[i]);
+				stat_val[j].masked = 0;
                                 break;
                         case ESTATS_UNSIGNED32:
 				stat_val[j].uv32 = mnl_attr_get_u32(ia.tb[i]);
+				stat_val[j].masked = 0;
                                 break;
                         case ESTATS_SIGNED32:
 				stat_val[j].sv32 = (int32_t) mnl_attr_get_u32(ia.tb[i]); 
+				stat_val[j].masked = 0;
                                 break;
                         case ESTATS_UNSIGNED16:
 				stat_val[j].uv16 = mnl_attr_get_u16(ia.tb[i]);
+				stat_val[j].masked = 0;
                                 break;
                         case ESTATS_UNSIGNED8:
 				stat_val[j].uv8 = mnl_attr_get_u8(ia.tb[i]);
+				stat_val[j].masked = 0;
                                 break;
                         default:
                                 break;
                         }
                 }
-		else stat_val[j].masked = 1;
+		else
+			stat_val[j].masked = 1;
         }
 }
 
@@ -483,8 +483,8 @@ static int parse_table_name_cb(const struct nlattr* attr, void* data)
                         printf("\t(%d)\n", type);
                 }
 		break;
-          default :
-            printf("DEBUG: XXX parse_table_var_name_cb(): unknown type: %d.\n", type);
+	default:
+		break;
 	}
 	// XXX tb[type] = attr;  // XXX Broken, we just keep rewriting over, so need to pass in index!
 
@@ -514,103 +514,6 @@ static int parse_var_cb(const struct nlattr* nested, void* data)
 
 	return MNL_CB_OK;
 }
-
-#if 0  // XXX Deprecated!
-static void parse_table_var_name(struct nlattr* nested, int index)
-{
-  struct nlattr *tb[NEA_TIME_MAX+1];  // XXX Wrong!
-	
-        const char* name_ptr = NULL;
-	uint32_t type = 0;
-
-        printf("DEBUG: XXX parse_table_var_name(): Working on index (table): %d.\n", index);
-
-	mnl_attr_parse_nested(nested, parse_table_var_name_cb, tb);
-
-	if (tb[NEA_VAR_NAME]) {
-                name_ptr = mnl_attr_get_str(tb[NEA_VAR_NAME]);
-	}
-	if (tb[NEA_VAR_TYPE]) {
-		type = mnl_attr_get_u32(tb[NEA_VAR_TYPE]);
-	}
-
-        printf("DEBUG: XXX parse_table_var_name(): Got %s, type: %d.\n", name_ptr, type);
-
-  /*
-        struct nlattr *tb_perf[PERF_INDEX_MAX+1]   = {};
-        struct nlattr *tb_path[PATH_INDEX_MAX+1]   = {};
-        struct nlattr *tb_stack[STACK_INDEX_MAX+1] = {};
-        struct nlattr *tb_app[APP_INDEX_MAX+1]     = {};
-        struct nlattr *tb_tune[TUNE_INDEX_MAX+1]   = {};
-        struct nlattr *tb_extras[EXTRAS_INDEX_MAX+1] = {};
-
-        struct index_attr ia = { .index = index };
-        int i, j;
-
-          printf("DEBUG: XXX parse_table(): index: %d.\n", index);
-        switch (index) {
-        case PERF_TABLE:
-                ia.tb = tb_perf;
-
-                break;
-        case PATH_TABLE:
-                ia.tb = tb_path;
-
-                break;
-        case STACK_TABLE:
-                ia.tb = tb_stack;
-
-                break;
-        case APP_TABLE:
-                ia.tb = tb_app;
-
-                break;
-        case TUNE_TABLE:
-                ia.tb = tb_tune;
-
-                break;
-        case EXTRAS_TABLE:
-                ia.tb = tb_extras;
-
-                break;
-        }
-
-        mnl_attr_parse_nested(nested, parse_table_cb, &ia);
-
-        printf("DEBUG: XXX parse_table(): max_index[%d]: %d.\n", index, max_index[index]);
-        for (i = 0; i < max_index[index]; i++) {
-
-		j = single_index(index, i);
-		
-                if (ia.tb[i]) {
-
-                  printf("DEBUG: XXX parse_table(): setting val[%d] union to tb[%d].\n", j, i);
-			switch(estats_var_array[j].valtype) {
-
-                        case ESTATS_UNSIGNED64: 
-				stat_val[j].uv64 = mnl_attr_get_u64(ia.tb[i]);
-                                break;
-                        case ESTATS_UNSIGNED32:
-				stat_val[j].uv32 = mnl_attr_get_u32(ia.tb[i]);
-                                break;
-                        case ESTATS_SIGNED32:
-				stat_val[j].sv32 = (int32_t) mnl_attr_get_u32(ia.tb[i]); 
-                                break;
-                        case ESTATS_UNSIGNED16:
-				stat_val[j].uv16 = mnl_attr_get_u16(ia.tb[i]);
-                                break;
-                        case ESTATS_UNSIGNED8:
-				stat_val[j].uv8 = mnl_attr_get_u8(ia.tb[i]);
-                                break;
-                        default:
-                                break;
-                        }
-                }
-		else stat_val[j].masked = 1;
-        }
-  */
-}
-#endif
 
 static int get_mib_attr_cb(const struct nlattr* attr, void* data)
 {
@@ -711,25 +614,6 @@ static int get_mib_cb(const struct nlmsghdr *nlh, void *data)
         /* get_mib_attr_cb() prints each variable out to stdout as it sees it. */
 	mnl_attr_parse(nlh, sizeof(*genl), get_mib_attr_cb, tb);
 
-        /*  XXX Deprecated.
-        if (tb[NLE_ATTR_NUM_TABLES])
-          parse_num_tables(tb[NLE_ATTR_NUM_TABLES], NULL);
-        if (tb[NLE_ATTR_NUM_VARS])
-          parse_num_vars(tb[NLE_ATTR_NUM_VARS], NULL);
-        if (tb[NLE_ATTR_PERF_VARS])
-                parse_table_var_name(tb[NLE_ATTR_PERF_VARS], PERF_TABLE);
-        if (tb[NLE_ATTR_PATH_VARS])
-                parse_table_var_name(tb[NLE_ATTR_PATH_VARS], PATH_TABLE);
-        if (tb[NLE_ATTR_STACK_VARS])
-                parse_table_var_name(tb[NLE_ATTR_STACK_VARS], STACK_TABLE);
-        if (tb[NLE_ATTR_APP_VARS])
-                parse_table_var_name(tb[NLE_ATTR_APP_VARS], APP_TABLE);
-        if (tb[NLE_ATTR_TUNE_VARS])
-                parse_table_var_name(tb[NLE_ATTR_TUNE_VARS], TUNE_TABLE);
-        if (tb[NLE_ATTR_EXTRAS_VARS])
-                parse_table_var_name(tb[NLE_ATTR_EXTRAS_VARS], EXTRAS_TABLE);
-        */
-
         return MNL_CB_OK;
 }
 
@@ -780,16 +664,7 @@ estats_list_conns(estats_connection_list* cli, const estats_nl_client* cl)
 
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	while (ret > 0) {
-          /*
-          fprintf(stderr, "DEBUG: XXX estats_list_conns(): ret: on entering loop. %d.\n", ret);
-          const struct nlmsghdr* nl_msghdr = (void*)buf;
-if (nl_msghdr->nlmsg_type >= NLMSG_MIN_TYPE) {
-          fprintf(stderr, "DEBUG: XXX estats_list_conns(): test to see if we call data_cb() passed.\n");
-} else
-  fprintf(stderr, "DEBUG: XXX estats_list_conns(): nlmsg_type (%d) < NLMSG_MIN_TYPE (%d).\n", nl_msghdr->nlmsg_type, NLMSG_MIN_TYPE);
-          */
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, cli);
-                //fprintf(stderr, "DEBUG: XXX estats_list_conns(): After call to mnl_cb_run(), ret: %d.\n", ret);
 		if (ret <= 0)
 			break;
 		ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
@@ -841,13 +716,19 @@ estats_read_vars(struct estats_val_data* data, int cid, const estats_nl_client* 
 
         attrp = mnl_attr_nest_start_check(nlh, getpagesize(), NLE_ATTR_MASK);
 	Err2If(!attrp, ESTATS_ERR_GENL, "attr_nest_start failure");
-
-        if (cl->mask.if_mask[0]) mnl_attr_put_u64(nlh, NEA_PERF_MASK, cl->mask.masks[0]);
-        if (cl->mask.if_mask[1]) mnl_attr_put_u64(nlh, NEA_PATH_MASK, cl->mask.masks[1]);
-        if (cl->mask.if_mask[2]) mnl_attr_put_u64(nlh, NEA_STACK_MASK, cl->mask.masks[2]);
-        if (cl->mask.if_mask[3]) mnl_attr_put_u64(nlh, NEA_APP_MASK, cl->mask.masks[3]);
-        if (cl->mask.if_mask[4]) mnl_attr_put_u64(nlh, NEA_TUNE_MASK, cl->mask.masks[4]);
-        if (cl->mask.if_mask[5]) mnl_attr_put_u64(nlh, NEA_EXTRAS_MASK, cl->mask.masks[5]);
+	
+	if (cl->mask.if_mask[0])
+		mnl_attr_put_u64(nlh, NEA_PERF_MASK, cl->mask.masks[0]);
+        if (cl->mask.if_mask[1])
+		mnl_attr_put_u64(nlh, NEA_PATH_MASK, cl->mask.masks[1]);
+        if (cl->mask.if_mask[2])
+		mnl_attr_put_u64(nlh, NEA_STACK_MASK, cl->mask.masks[2]);
+        if (cl->mask.if_mask[3])
+		mnl_attr_put_u64(nlh, NEA_APP_MASK, cl->mask.masks[3]);
+        if (cl->mask.if_mask[4])
+		mnl_attr_put_u64(nlh, NEA_TUNE_MASK, cl->mask.masks[4]);
+        if (cl->mask.if_mask[5])
+		mnl_attr_put_u64(nlh, NEA_EXTRAS_MASK, cl->mask.masks[5]);
 
         mnl_attr_nest_end(nlh, attrp);
 
@@ -869,8 +750,6 @@ estats_read_vars(struct estats_val_data* data, int cid, const estats_nl_client* 
 		Err2(ESTATS_ERR_GENL, "mnl_cb_run error");
 	}
 
-//	Chk(estats_connection_tuple_copy(&data->tuple, &stat_tuple));
-
 	data->tuple = stat_tuple;
 
 	data->tv.sec = stat_tv.sec;
@@ -879,6 +758,7 @@ estats_read_vars(struct estats_val_data* data, int cid, const estats_nl_client* 
 	for (k = 0; k < TOTAL_NUM_VARS; k++) {
 		data->val[k] = stat_val[k];
 	}
+
 
  Cleanup:
 	return err;
@@ -983,14 +863,6 @@ estats_get_mib(struct estats_val_data* data, const estats_nl_client* cl)
         if (ret > 0)
                 printf("TCP Extended Statistics (RFC 4898) ");  // note lack of '\n'
 	while (ret > 0) {
-          /*
-          fprintf(stderr, "DEBUG: XXX estats_get_mib(): ret: %d.\n", ret);
-          const struct nlmsghdr* nl_msghdr = (void*)buf;
-if (nl_msghdr->nlmsg_type >= NLMSG_MIN_TYPE) {
-          fprintf(stderr, "DEBUG: XXX estats_list_conns(): test to see if we call data_cb() passed.\n");
-} else
-  fprintf(stderr, "DEBUG: XXX estats_list_conns(): nlmsg_type (%d) < NLMSG_MIN_TYPE (%d).\n", nl_msghdr->nlmsg_type, NLMSG_MIN_TYPE);
-          */
 		ret = mnl_cb_run(buf, ret, seq, portid, get_mib_cb, NULL);
 		if (ret <= 0)
 			break;
