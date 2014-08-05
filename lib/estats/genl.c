@@ -120,27 +120,24 @@ static void parse_table(struct nlattr *nested, int index)
 		
                 if (ia.tb[i]) {
 
+			stat_val[j].masked = 0;
+
 			switch(estats_var_array[j].valtype) {
 
                         case ESTATS_UNSIGNED64: 
 				stat_val[j].uv64 = mnl_attr_get_u64(ia.tb[i]);
-				stat_val[j].masked = 0;
                                 break;
                         case ESTATS_UNSIGNED32:
 				stat_val[j].uv32 = mnl_attr_get_u32(ia.tb[i]);
-				stat_val[j].masked = 0;
                                 break;
                         case ESTATS_SIGNED32:
 				stat_val[j].sv32 = (int32_t) mnl_attr_get_u32(ia.tb[i]); 
-				stat_val[j].masked = 0;
                                 break;
                         case ESTATS_UNSIGNED16:
 				stat_val[j].uv16 = mnl_attr_get_u16(ia.tb[i]);
-				stat_val[j].masked = 0;
                                 break;
                         case ESTATS_UNSIGNED8:
 				stat_val[j].uv8 = mnl_attr_get_u8(ia.tb[i]);
-				stat_val[j].masked = 0;
                                 break;
                         default:
                                 break;
