@@ -15,6 +15,8 @@
  */
 #ifndef ESTATS_CONNECTION_H
 #define ESTATS_CONNECTION_H
+#include "uthash.h"
+#include "lookup3.h"
 
 struct	estats_error* estats_connection_list_new( struct estats_connection_list** );
 
@@ -39,5 +41,33 @@ estats_error* estats_connection_info_get_uid(int* /*uid*/, const estats_connecti
 estats_error* estats_connection_info_get_cmdline(char** /*str*/, const estats_connection_info*);
 
 estats_error* estats_connection_info_get_tuple(struct estats_connection_tuple*, const estats_connection_info*);
+
+// the following struct and functions defines are private
+struct s_tcp_hash {
+	uint32_t tcpkey;
+	struct estats_connection_info* info;
+	UT_hash_handle hh;
+};
+
+struct s_ino_hash {
+	int ino;
+	uint32_t inokey;
+	struct estats_connection_info* info;
+	UT_hash_handle hh;
+};
+
+struct s_pid_hash {
+	int ino;
+	struct estats_connection_info* info;
+	UT_hash_handle hh;
+};
+
+static struct estats_error* _estats_get_tcp_list(const struct estats_connection_list*,
+						 struct s_tcp_hash**);
+
+static struct estats_error* _estats_get_ino_list(struct s_ino_hash**);
+
+static struct estats_error* _estats_get_pid_list(struct s_pid_hash**);
+
 
 #endif /* ESTATS_CONNECTION_H */
