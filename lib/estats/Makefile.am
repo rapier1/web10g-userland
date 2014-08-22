@@ -11,7 +11,9 @@ estats_pub_h_sources = \
 	record.h \
 	tcp_estats_nl.h \
 	types.h \
-	val.h
+	val.h \
+	lookup3.h \
+	uthash.h 
 
 # Header files not installed
 estats_pri_h_sources = \

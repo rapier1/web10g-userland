@@ -505,7 +505,8 @@ static int parse_var_cb(const struct nlattr* nested, void* data)
                 }
                 break;
           default :
-            printf("DEBUG: XXX parse_var_cb(): unknown type: %d.\n", type);
+		  //printf("DEBUG: XXX parse_var_cb(): unknown type: %d.\n", type);
+		  break;
 	}
 	// XXX tb[type] = attr;  // XXX Broken, we just keep rewriting over, so need to pass in index!
 
@@ -554,7 +555,7 @@ static int get_mib_attr_cb(const struct nlattr* attr, void* data)
                         dbgprintf("mnl_attr_validate NLE_ATTR_PATH\n");
                         return MNL_CB_ERROR;
                 } else {
-                        printf("Performance Table:\n");
+                        printf("Path Table:\n");
                         mnl_attr_parse_nested(attr, parse_var_cb, NULL);
                 }
                 break;
@@ -621,12 +622,12 @@ estats_list_conns(estats_connection_list* cli, const estats_nl_client* cl)
 	struct mnl_socket* nl;
 	int fam_id; 
 	int ret;
-
+	
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlmsghdr *nlh;
 	struct genlmsghdr *genl;
-	unsigned int seq, portid;
-
+	size_t seq, portid;
+	
 	struct list_head* conn_head;
 	struct estats_list* conn_pos;
 	struct estats_list* list_pos;
@@ -634,42 +635,51 @@ estats_list_conns(estats_connection_list* cli, const estats_nl_client* cl)
 	estats_connection* conn;
 	estats_connection* tmp;
 
+	struct timeval time_s; 
+	time_t seconds;
+	time_t microsecs;
+	
+	gettimeofday(&time_s, NULL);
+	seconds = time_s.tv_sec;
+	microsecs = time_s.tv_usec;
+
 	ErrIf(cli == NULL, ESTATS_ERR_INVAL);
-
+	
 	conn_head = &(cli->connection_head);
-
+	
 	list_for_each_safe(conn_head, conn, tmp, list) {
 		list_del(&conn->list);
 		free(conn);
 	}
-
+	
 	nl = cl->mnl_sock;
 	fam_id = cl->fam_id;
 	portid = mnl_socket_get_portid(nl);
-
+		
 	nlh = mnl_nlmsg_put_header(buf);
+	
 	nlh->nlmsg_type = fam_id;
 	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
-	nlh->nlmsg_seq = seq = time(NULL);
+	nlh->nlmsg_seq = seq = (seconds * 1000000 + microsecs);
 	genl = mnl_nlmsg_put_extra_header(nlh, sizeof(struct genlmsghdr));
-
+	
  	genl->cmd = TCPE_CMD_LIST_CONNS;
-
+	
 	ret = mnl_socket_sendto(nl, nlh, nlh->nlmsg_len);
-
+	
 	Err2If(ret == -1, ESTATS_ERR_GENL, "mnl_socket_send");
-
+	
 	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
+	
 	while (ret > 0) {
 		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, cli);
-		if (ret <= 0)
-			break;
+		if (ret <= 0) 
+			break;		
 		ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 	}
-
+	
 	Err2If(ret == -1, ESTATS_ERR_GENL, "error");
-
- Cleanup:
+Cleanup:
  	return err;
 }
 

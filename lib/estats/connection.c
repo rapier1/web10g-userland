@@ -25,6 +25,15 @@
 
 #include <estats/estats-int.h>
 
+// forward declaration of some private functions
+static struct estats_error* _estats_get_tcp_list(const struct estats_connection_list*,
+						 struct s_tcp_hash**);
+
+static struct estats_error* _estats_get_ino_list(struct s_ino_hash**);
+
+static struct estats_error* _estats_get_pid_list(struct s_pid_hash**);
+
+
 struct estats_error*
 estats_connection_list_new(struct estats_connection_list** connection_list)
 {
