@@ -216,11 +216,13 @@ _estats_record_open_read(estats_record* record, const char* path)
 
     Chk(Fopen(&header, "./record_header", "w+"));
 
+    /* position filepos past header, while copying header to tmp file */
     while (h_siz-- > 0) {
         c = fgetc(record->fp);
        	Chk(Fputc(c, header));
     }
 
+    /* rewind and check the tmp file (header) for correctness */
     Chk(Fseek(header, 0, SEEK_SET)); // rewind
 
     Chk(_estats_record_parse_header(record, header));
@@ -347,9 +349,6 @@ Cleanup:
 static void
 _estats_record_free(estats_record** record)
 {
-    struct estats_list* pos;
-    struct estats_list* tmp;
-
     if (record == NULL || *record == NULL) return;
 
     Fclose(&(*record)->fp);

@@ -16,7 +16,10 @@
  *
  */
 #include "scripts.h"
-#include "estats/debug-int.h"
+/* this really shouldn't be here - it's an internal header from lib/estats.
+   (It's here because in scripts.h, Chk2 needs it, which is a mistake -
+	so for now, I've changed Chk2 to Chk2Ign in this file...)
+/*#include "estats/debug-int.h"*/
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
@@ -158,10 +161,12 @@ int main(int argc, char **argv)
 		Chk(estats_list_conns(clist, cl));
 
 		list_for_each(&clist->connection_head, cp, list) {
-			struct estats_connection_tuple* ct = (struct estats_connection_tuple*) cp;
+			/* instead of casting, estats_connection_tuple should be
+				an explicit member of estats_connection */
+			struct estats_connection_tuple* ct = (struct estats_connection_tuple*) &(cp->rem_addr[0]);
 
-			Chk2(estats_connection_tuple_as_strings(&asc, ct));
-			Chk2(estats_read_vars(data, atoi(asc.cid), cl));
+			Chk2Ign(estats_connection_tuple_as_strings(&asc, ct));
+			Chk2Ign(estats_read_vars(data, atoi(asc.cid), cl));
 	
 			if (data->length == 0)
 				continue;

@@ -34,7 +34,9 @@ int main(int argc, char **argv)
 	Chk(estats_list_conns(clist, cl));
 
 	estats_list_for_each(&clist->connection_head, cp, list) {
-		struct estats_connection_tuple* ct = (struct estats_connection_tuple*) cp;
+		/* instead of casting, estats_connection_tuple should be
+			an explicit member of estats_connection */
+		struct estats_connection_tuple* ct = (struct estats_connection_tuple*) &(cp->rem_addr[0]);
 		Chk(estats_connection_tuple_as_strings(&asc, ct));
 
 		printf("%-8s %-20s %-8s %-20s %-8s\n", asc.cid, asc.local_addr, asc.local_port, asc.rem_addr, asc.rem_port);

@@ -22,6 +22,14 @@ struct	estats_error* estats_connection_list_new( struct estats_connection_list**
 
 void	estats_connection_list_free( struct estats_connection_list** );
 
+struct	estats_error* estats_connection_vars_list_new( struct estats_connection_vars_list** );
+
+void	estats_connection_vars_list_free( struct estats_connection_vars_list** );
+
+struct	estats_error* estats_connection_vars_new( struct estats_connection_vars** );
+
+void	estats_connection_vars_free( struct estats_connection_vars** );
+
 struct	estats_error* estats_connection_info_new( struct estats_connection_info** );
 
 void	estats_connection_info_free( struct estats_connection_info** );

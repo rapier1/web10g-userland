@@ -26,6 +26,105 @@ struct index_attr {
         int index;
 };
 
+/* data_cb_object - helper struct for data_cb
+	(the primary parse function for list_conns and list_conns_vars)
+	essentially, this function/list_head grouping
+	is an object that knows what list entry to add
+	and what global data to access
+	when parsing a list_conns or list_conns_vars reply message */
+/* data_cb_object method interface */
+/* adds global data to new entry in list */
+typedef void (*estats_add_from_globals_to_list)(struct list_head *);
+/* gets cid of next entry in list, i.e. one past last cid in list
+	 (returns -1 if list empty) */
+typedef int (*estats_get_next_cid)(struct list_head *, uint32_t */*cid*/);
+
+struct data_cb_object {
+	struct list_head *lh;
+	estats_add_from_globals_to_list	add_globals_to_list;
+	estats_get_next_cid		get_next_cid;
+};
+typedef struct data_cb_object	data_cb_object;
+
+/* Methods for data_cb_object w/ estats_connection_list */
+/* add_from_globals_to_list for connection_list:
+	adds global data to new entry in list */
+static void
+add_globals_to_connection_list(struct list_head *lh) {
+	estats_connection* cp = NULL;
+
+	cp = malloc(sizeof(estats_connection));
+	if (cp == NULL) {
+		dbgprintf("No mem; malloc failed");
+		return;
+	}
+	memset((void*) cp, 0, sizeof(estats_connection_list));
+
+	memcpy(&(cp->rem_addr[0]), &(stat_tuple.rem_addr[0]), 16);
+	memcpy(&(cp->local_addr[0]), &(stat_tuple.local_addr[0]), 16);
+	cp->rem_port = stat_tuple.rem_port;
+	cp->local_port = stat_tuple.local_port;
+	cp->addr_type = stat_tuple.addr_type;
+	cp->cid = stat_tuple.cid;
+
+	list_add_tail(lh, &cp->list);
+}
+
+/* get_next_cid for connection_list:
+	gets cid of next entry in list, i.e. one past last cid in list
+	 (returns -1 if list empty) */
+static int
+get_next_cid_from_connection_list(struct list_head *lh, uint32_t *cid) {
+	estats_connection* conn;
+	conn = list_tail(lh, estats_connection, list);
+	if (!conn)
+		return -1;
+	*cid = conn->cid+1;
+	return 0;
+}
+
+/* Methods for data_cb_object w/ estats_connection_vars_list */
+/* add_from_globals_to_list for connection_vars_list:
+	adds global data to new entry in list */
+static void
+add_globals_to_connection_vars_list(struct list_head *lh) {
+	estats_error *err = NULL;
+	estats_connection_vars *cp = NULL;
+	int k;
+
+	if (err = estats_connection_vars_new(&cp)) {
+		dbgprintf("No mem; malloc failed");
+		/* this is likely to be the static _OOM_Error,
+			but just in case - free before returning */
+		estats_error_free(&err);
+		return;
+	}
+
+	cp->data->tuple = stat_tuple;
+
+	cp->data->tv.sec = stat_tv.sec;
+	cp->data->tv.usec = stat_tv.usec;
+
+	for (k = 0; k < TOTAL_NUM_VARS; k++) {
+		cp->data->val[k] = stat_val[k];
+	}
+
+	list_add_tail(lh, &cp->list);
+}
+
+/* get_next_cid for connection_vars_list:
+	gets cid of next entry in list, i.e. one past last cid in list
+	 (returns -1 if list empty) */
+static int
+get_next_cid_from_connection_vars_list(struct list_head *lh, uint32_t *cid) {
+	estats_connection_vars* conn;
+	conn = list_tail(lh, estats_connection_vars, list);
+	if (!conn)
+		return -1;
+	*cid = conn->data->tuple.cid+1;
+	return 0;
+}
+
 static int parse_table_cb(const struct nlattr *attr, void *data)
 {
         struct index_attr *ia = (struct index_attr *)data;
@@ -237,64 +336,6 @@ static int parse_4tuple_cb(const struct nlattr *attr, void *data)
         return MNL_CB_OK;
 }
 
-static void parse_4tuple_list(struct nlattr *nested, struct estats_connection_list *cli)
-{
-        struct nlattr *tb[NEA_4TUPLE_MAX+1];
-        struct nlattr *attr;
-	struct estats_connection* cp = NULL;
-	struct list_head* conn_head;
-
-	uint8_t rem_addr[16];
-	uint8_t local_addr[16];
-        uint16_t rem_port = 0;
-        uint16_t local_port = 0;
-	uint8_t addr_type = 0;
-        int cid = 0;
-
-        mnl_attr_parse_nested(nested, parse_4tuple_cb, tb);
-
-        if (tb[NEA_LOCAL_ADDR]) {
-		memcpy(&local_addr[0], mnl_attr_get_payload(tb[NEA_LOCAL_ADDR]), 16);
-        }
-        if (tb[NEA_REM_ADDR]) {
-		memcpy(&rem_addr[0], mnl_attr_get_payload(tb[NEA_REM_ADDR]), 16);
-        }
-        if (tb[NEA_LOCAL_PORT]) {
-                local_port = mnl_attr_get_u16(tb[NEA_LOCAL_PORT]);
-        }
-        if (tb[NEA_REM_PORT]) {
-                rem_port = mnl_attr_get_u16(tb[NEA_REM_PORT]);
-        }
-	if (tb[NEA_ADDR_TYPE]) {
-		addr_type = mnl_attr_get_u8(tb[NEA_ADDR_TYPE]);
-	}
-	else printf("No addrtype from kernel\n");
-        if (tb[NEA_CID]) {
-                cid = mnl_attr_get_u32(tb[NEA_CID]);
-        }
-
-	if (cid > 0) {
-		conn_head = &(cli->connection_head);
-
-		cp = malloc(sizeof(estats_connection));
-		memset((void*) cp, 0, sizeof(estats_connection_list));
-		if (cp == NULL) {
-			dbgprintf("No mem; malloc failed");
-			return;
-		}
-
-		memcpy(&(cp->rem_addr[0]), &rem_addr[0], 16);
-		memcpy(&(cp->local_addr[0]), &local_addr[0], 16);
-		cp->rem_port = rem_port;
-		cp->local_port = local_port;
-		cp->addr_type = addr_type;
-		cp->cid = cid;
-
-		list_add_tail(conn_head, &cp->list);
-        	cp = NULL;
-        }
-}
-
 static void parse_4tuple(struct nlattr *nested)
 {
   //fprintf(stderr, "DEBUG: parse_4tuple(): called.\n");
@@ -395,47 +436,50 @@ static int data_attr_cb(const struct nlattr *attr, void *data)
         return MNL_CB_OK;
 }
 
+/* NOTE this is not robust against poorly formed replies to commands
+      (i.e. replies that are missing required attributes)
+*/
 static int data_cb(const struct nlmsghdr *nlh, void *data)
 {
   //fprintf(stderr, "DEBUG: data_cb(): called.\n");
         struct nlattr *tb[NLE_ATTR_MAX+1] = {};
         struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
         //fprintf(stderr, "DEBUG: data_cb(): genlmsghdr->cmd: %c.\n", genl->cmd);
-	struct estats_connection_list *cli;
+	data_cb_object *cb_obj = (data_cb_object *)data;
 
 	mnl_attr_parse(nlh, sizeof(*genl), data_attr_cb, tb);
 
-        if (tb[NLE_ATTR_4TUPLE]) {
-		if (data != NULL) {
-			cli = (struct estats_connection_list*) data;
-			parse_4tuple_list(tb[NLE_ATTR_4TUPLE], cli);
-		}
-		else
-			parse_4tuple(tb[NLE_ATTR_4TUPLE]);
+	if (tb[NLE_ATTR_4TUPLE]) {
+		parse_4tuple(tb[NLE_ATTR_4TUPLE]);
 	}
-        if (tb[NLE_ATTR_TIME]) {
-                parse_time(tb[NLE_ATTR_TIME], NULL);
-        }
-        if (tb[NLE_ATTR_PERF_VALS]) {
-                parse_table(tb[NLE_ATTR_PERF_VALS], PERF_TABLE);
-        }
-        if (tb[NLE_ATTR_PATH_VALS]) {
-                parse_table(tb[NLE_ATTR_PATH_VALS], PATH_TABLE);
-        }
-        if (tb[NLE_ATTR_STACK_VALS]) {
-                parse_table(tb[NLE_ATTR_STACK_VALS], STACK_TABLE);
-        }
-        if (tb[NLE_ATTR_APP_VALS]) {
-                parse_table(tb[NLE_ATTR_APP_VALS], APP_TABLE);
-        }
-        if (tb[NLE_ATTR_TUNE_VALS]) {
-                parse_table(tb[NLE_ATTR_TUNE_VALS], TUNE_TABLE);
-        }
-        if (tb[NLE_ATTR_EXTRAS_VALS]) {
-                parse_table(tb[NLE_ATTR_EXTRAS_VALS], EXTRAS_TABLE);
-        }
+	if (tb[NLE_ATTR_TIME]) {
+		parse_time(tb[NLE_ATTR_TIME], NULL);
+	}
+	if (tb[NLE_ATTR_PERF_VALS]) {
+		parse_table(tb[NLE_ATTR_PERF_VALS], PERF_TABLE);
+	}
+	if (tb[NLE_ATTR_PATH_VALS]) {
+		parse_table(tb[NLE_ATTR_PATH_VALS], PATH_TABLE);
+	}
+	if (tb[NLE_ATTR_STACK_VALS]) {
+		parse_table(tb[NLE_ATTR_STACK_VALS], STACK_TABLE);
+	}
+	if (tb[NLE_ATTR_APP_VALS]) {
+		parse_table(tb[NLE_ATTR_APP_VALS], APP_TABLE);
+	}
+	if (tb[NLE_ATTR_TUNE_VALS]) {
+		parse_table(tb[NLE_ATTR_TUNE_VALS], TUNE_TABLE);
+	}
+	if (tb[NLE_ATTR_EXTRAS_VALS]) {
+		parse_table(tb[NLE_ATTR_EXTRAS_VALS], EXTRAS_TABLE);
+	}
+
+	if (cb_obj != NULL && cb_obj->lh != NULL
+			&& cb_obj->add_globals_to_list != NULL) {
+		cb_obj->add_globals_to_list(cb_obj->lh);
+	}
  
-        return MNL_CB_OK;
+	return MNL_CB_OK;
 }
 
 /* Routines concerned with simply getting the attribute name (as opposed to value).  This really doesn't ammke a lot of sense, i.e., we simply took John's code for parsing (and storing the vars) and adapted it for get-mib.  In the future, I think I'll rewrite to not even use libmnl for (at least) get-mib.  TODO(aka) */
@@ -615,72 +659,332 @@ static int get_mib_cb(const struct nlmsghdr *nlh, void *data)
         return MNL_CB_OK;
 }
 
+/* note that this is not robust against a kernel that does not return
+    NLE_ATTR_TIMESTAMP in the response from TCPE_CMD_TIMESTAMP. */
+static int timestamp_attr_cb(const struct nlattr* attr, void* data)
+{
+	int type = mnl_attr_get_type(attr);
+
+	switch(type) {
+	case NLE_ATTR_TIMESTAMP:
+		if (mnl_attr_validate(attr, MNL_TYPE_U64) < 0) {
+			dbgprintf("mnl_attr_validate NLE_ATTR_TIMESTAMP\n");
+			return MNL_CB_ERROR;
+		} else {
+			*(uint64_t *)data = mnl_attr_get_u64(attr);
+		}
+		break;
+	default:
+		dbgprintf("timestamp_attr_cb(): unknown type: %d.\n", type);
+		break;
+	}
+
+	return MNL_CB_OK;
+}
+
+static int timestamp_cb(const struct nlmsghdr *nlh, void *data)
+{
+	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
+	if (genl->cmd != TCPE_CMD_TIMESTAMP)
+		return MNL_CB_ERROR;
+	return mnl_attr_parse(nlh, sizeof(*genl), timestamp_attr_cb, data);
+}
+
+/* retrieves timestamp representing <time now> minus ms_delta milliseconds */
 struct estats_error*
-estats_list_conns(estats_connection_list* cli, const estats_nl_client* cl)
+estats_get_timestamp(uint64_t *timestamp, uint32_t ms_delta,
+			const estats_nl_client* cl)
 {
 	estats_error* err = NULL;
 	struct mnl_socket* nl;
 	int fam_id; 
 	int ret;
-	
+
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 	struct nlmsghdr *nlh;
 	struct genlmsghdr *genl;
 	size_t seq, portid;
-	
-	struct list_head* conn_head;
-	struct estats_list* conn_pos;
-	struct estats_list* list_pos;
-	estats_connection* cp = NULL;
-	estats_connection* conn;
-	estats_connection* tmp;
+
+	ErrIf(timestamp == NULL, ESTATS_ERR_INVAL);
+
+	nl = cl->mnl_sock;
+	fam_id = cl->fam_id;
+
+	portid = mnl_socket_get_portid(nl);
+
+	nlh = mnl_nlmsg_put_header(buf);
+	nlh->nlmsg_type = fam_id;
+	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
+	nlh->nlmsg_seq = seq = time(NULL);
+	genl = mnl_nlmsg_put_extra_header(nlh, sizeof(struct genlmsghdr));
+
+	genl->cmd = TCPE_CMD_TIMESTAMP;
+
+	if (ms_delta>0)
+		mnl_attr_put_u32(nlh, NLE_ATTR_TIMESTAMP_DELTA, ms_delta);
+
+	ret = mnl_socket_sendto(nl, nlh, nlh->nlmsg_len);
+
+	Err2If(ret == -1, ESTATS_ERR_GENL, "mnl_socket_send");
+
+	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
+	while (ret > 0) {
+          //fprintf(stderr, "DEBUG: XXX estats_get_timestamp(): ret: %d.\n", ret);
+		ret = mnl_cb_run(buf, ret, seq, portid, timestamp_cb, timestamp);
+		if (ret <= 0)
+			break;
+		ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
+	}
+
+	if (ret == -1) {
+		printf("%s\n", strerror(errno));
+		Err2(ESTATS_ERR_GENL, "mnl_cb_run error");
+	}
+Cleanup:
+	return err;
+}
+
+/*
+ _list_conns_vars_common_:
+	this is the "core" messaging loop of both list_conns and list_conns_vars.
+
+	"cmd" is the appropriate netlink command (TCPE_CMD_xxx)
+	"cb_obj" is used to encapsulate the appropriate list and
+		methods for interacting with the list.
+	"filter" and "timestamp" are used to filter which connections are
+		returned by last active timestamp
+	"cl" encapsulates the netlink socket and relevant parameters
+*/
+static struct estats_error*
+_list_conns_vars_common_(uint8_t cmd, data_cb_object *cb_obj,
+			bool filter, uint64_t timestamp,
+			const estats_nl_client* cl)
+{
+	estats_error* err = NULL;
+	struct mnl_socket* nl;
+	int fam_id;
+	int ret;
+
+	char buf[MNL_SOCKET_BUFFER_SIZE];
+	struct nlmsghdr *nlh;
+	struct genlmsghdr *genl;
+	size_t seq, portid;
+	struct nlattr *cid_attr;
+	uint32_t cid, next_cid;
 
 	struct timeval time_s; 
 	time_t seconds;
 	time_t microsecs;
-	
+
 	gettimeofday(&time_s, NULL);
 	seconds = time_s.tv_sec;
 	microsecs = time_s.tv_usec;
 
-	ErrIf(cli == NULL, ESTATS_ERR_INVAL);
-	
-	conn_head = &(cli->connection_head);
-	
-	list_for_each_safe(conn_head, conn, tmp, list) {
-		list_del(&conn->list);
-		free(conn);
-	}
+	ErrIf(cb_obj == NULL || cb_obj->lh == NULL
+		|| cb_obj->add_globals_to_list == NULL
+		|| cb_obj->get_next_cid == NULL, ESTATS_ERR_INVAL);
 	
 	nl = cl->mnl_sock;
 	fam_id = cl->fam_id;
 	portid = mnl_socket_get_portid(nl);
 		
-	nlh = mnl_nlmsg_put_header(buf);
+	seq = (seconds * 1000000 + microsecs);
+	cid = 0;
+
+	while (1) {
+		nlh = mnl_nlmsg_put_header(buf);
 	
-	nlh->nlmsg_type = fam_id;
-	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
-	nlh->nlmsg_seq = seq = (seconds * 1000000 + microsecs);
-	genl = mnl_nlmsg_put_extra_header(nlh, sizeof(struct genlmsghdr));
+		nlh->nlmsg_type = fam_id;
+		nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
+		nlh->nlmsg_seq = ++seq;
+		genl = mnl_nlmsg_put_extra_header(nlh, sizeof(struct genlmsghdr));
 	
- 	genl->cmd = TCPE_CMD_LIST_CONNS;
+		genl->cmd = cmd;
+
+		if (filter)
+			mnl_attr_put_u64(nlh, NLE_ATTR_TIMESTAMP, timestamp);
+
+		cid_attr = mnl_attr_nest_start(nlh, NLE_ATTR_4TUPLE);
+		mnl_attr_put_u32(nlh, NEA_CID, cid);
+		mnl_attr_nest_end(nlh, cid_attr);
 	
-	ret = mnl_socket_sendto(nl, nlh, nlh->nlmsg_len);
+		ret = mnl_socket_sendto(nl, nlh, nlh->nlmsg_len);
 	
-	Err2If(ret == -1, ESTATS_ERR_GENL, "mnl_socket_send");
+		Err2If(ret == -1, ESTATS_ERR_GENL, "mnl_socket_send");
 	
-	ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
-	
-	while (ret > 0) {
-		ret = mnl_cb_run(buf, ret, seq, portid, data_cb, cli);
-		if (ret <= 0) 
-			break;		
 		ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
+
+		while (ret > 0) {
+			ret = mnl_cb_run(buf, ret, seq, portid, data_cb, cb_obj);
+			if (ret <= 0)
+				break;
+			ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
+		}
+		Err2If(ret == -1, ESTATS_ERR_GENL, "error");
+		if (cb_obj->get_next_cid(cb_obj->lh, &next_cid) < 0)
+			/* break if list is empty... */
+			break;
+		if (next_cid == cid)
+			/* break if we got no new connections this time */
+			break;
+		cid = next_cid;
 	}
 	
-	Err2If(ret == -1, ESTATS_ERR_GENL, "error");
 Cleanup:
  	return err;
+}
+
+/*
+ _list_conns_common:
+	sets up the parameters of the "core" messaging loop for the
+		command TCPE_CMD_LIST_CONNS
+
+	"filter" and "timestamp" are used to filter which connections are
+		returned by last active timestamp
+	"cl" encapsulates the netlink socket and relevant parameters
+*/
+static struct estats_error*
+_list_conns_common(estats_connection_list* cli, bool filter, uint64_t timestamp,
+			const estats_nl_client* cl)
+{
+	estats_error* err = NULL;
+
+	struct list_head* conn_head;
+	estats_connection* conn;
+	estats_connection* tmp;
+
+	data_cb_object cb_obj;
+
+	ErrIf(cli == NULL, ESTATS_ERR_INVAL);
+
+	conn_head = &(cli->connection_head);
+
+	list_for_each_safe(conn_head, conn, tmp, list) {
+		list_del(&conn->list);
+		free(conn);
+	}
+
+	cb_obj.lh = conn_head;
+	cb_obj.add_globals_to_list = add_globals_to_connection_list;
+	cb_obj.get_next_cid = get_next_cid_from_connection_list;
+
+	return _list_conns_vars_common_(TCPE_CMD_LIST_CONNS, &cb_obj,
+					filter, timestamp, cl);
+Cleanup:
+	return err;
+}
+
+/* frees connection_list entries, then
+	fills connection_list with list of all existing connections */
+struct estats_error*
+estats_list_conns(estats_connection_list* cli, const estats_nl_client* cl)
+{
+	return _list_conns_common(cli, false, 0, cl);
+}
+
+/* frees connection_list entries, then
+	fills connection_list with list of all existing connections
+	which have seen activity since the given timestamp */
+struct estats_error*
+estats_list_conns_active_since(
+	estats_connection_list* cli, uint64_t timestamp,
+	const estats_nl_client* cl)
+{
+	return _list_conns_common(cli, true, timestamp, cl);
+}
+
+/* frees connection_list entries, then
+	fills connection_list with list of all existing connections
+	which have seen activity within ms_delta (in ms) of <now> */
+struct estats_error*
+estats_list_conns_active_within(
+	estats_connection_list* cli, uint32_t ms_delta,
+	const estats_nl_client* cl)
+{
+	uint64_t timestamp;
+	estats_error *err = NULL;
+	err = estats_get_timestamp(&timestamp, ms_delta, cl);
+	if (err != NULL)
+		return err;
+	return _list_conns_common(cli, true, timestamp, cl);
+}
+
+/*
+ _list_conns_vars_common: (NOTE - distinct from _list_conns_vars_common_)
+	sets up the parameters of the "core" messaging loop for the
+		command TCPE_CMD_READ_ALL
+
+	"filter" and "timestamp" are used to filter which connections are
+		returned by last active timestamp
+	"cl" encapsulates the netlink socket and relevant parameters
+*/
+static struct estats_error*
+_list_conns_vars_common(estats_connection_vars_list* cli, bool filter, uint64_t timestamp,
+			const estats_nl_client* cl)
+{
+	estats_error* err = NULL;
+
+	struct list_head* conn_head;
+	estats_connection_vars* conn;
+	estats_connection_vars* tmp;
+
+	data_cb_object cb_obj;
+
+	ErrIf(cli == NULL, ESTATS_ERR_INVAL);
+
+	conn_head = &(cli->connection_vars_head);
+
+	list_for_each_safe(conn_head, conn, tmp, list) {
+		list_del(&conn->list);
+		estats_connection_vars_free(&conn);
+	}
+
+	cb_obj.lh = conn_head;
+	cb_obj.add_globals_to_list = add_globals_to_connection_vars_list;
+	cb_obj.get_next_cid = get_next_cid_from_connection_vars_list;
+
+	return _list_conns_vars_common_(TCPE_CMD_READ_ALL, &cb_obj,
+					filter, timestamp, cl);
+Cleanup:
+	return err;
+}
+
+/* frees connection_vars_list entries, then
+	fills connection_vars_list with
+	list of all existing connections (with vars) */
+struct estats_error*
+estats_list_conns_vars(estats_connection_vars_list* cli, const estats_nl_client* cl)
+{
+	return _list_conns_vars_common(cli, false, 0, cl);
+}
+
+/* frees connection_vars_list entries, then
+	fills connection_vars_list with
+	list of all existing connections (with vars)
+	which have seen activity since the given timestamp */
+struct estats_error*
+estats_list_conns_vars_active_since(
+	estats_connection_vars_list* cli, uint64_t timestamp,
+	const estats_nl_client* cl)
+{
+	return _list_conns_vars_common(cli, true, timestamp, cl);
+}
+
+/* frees connection_vars_list entries, then
+	fills connection_vars_list with
+	list of all existing connections (with vars)
+	which have seen activity within ms_delta (in ms) of <now> */
+struct estats_error*
+estats_list_conns_vars_active_within(
+	estats_connection_vars_list* cli, uint32_t ms_delta,
+	const estats_nl_client* cl)
+{
+	uint64_t timestamp;
+	estats_error *err = NULL;
+	err = estats_get_timestamp(&timestamp, ms_delta, cl);
+	if (err != NULL)
+		return err;
+	return _list_conns_vars_common(cli, true, timestamp, cl);
 }
 
 struct estats_error*
@@ -831,6 +1135,7 @@ estats_write_var(const char* varname, uint32_t val, int cid, const estats_nl_cli
  	return err;
 }
 
+/* NOTE - data is unused here.  Should it be removed?? */
 struct estats_error*
 estats_get_mib(struct estats_val_data* data, const estats_nl_client* cl)
 {
