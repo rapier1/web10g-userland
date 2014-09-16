@@ -161,7 +161,9 @@ int main(int argc, char **argv)
 		Chk(estats_list_conns(clist, cl));
 
 		list_for_each(&clist->connection_head, cp, list) {
-			struct estats_connection_tuple* ct = (struct estats_connection_tuple*) cp;
+			/* instead of casting, estats_connection_tuple should be
+				an explicit member of estats_connection */
+			struct estats_connection_tuple* ct = (struct estats_connection_tuple*) &(cp->rem_addr[0]);
 
 			Chk2Ign(estats_connection_tuple_as_strings(&asc, ct));
 			Chk2Ign(estats_read_vars(data, atoi(asc.cid), cl));

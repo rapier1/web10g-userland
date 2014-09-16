@@ -769,7 +769,6 @@ _list_conns_vars_common_(uint8_t cmd, data_cb_object *cb_obj,
 	struct nlmsghdr *nlh;
 	struct genlmsghdr *genl;
 	size_t seq, portid;
-	uint32_t header_len;
 	struct nlattr *cid_attr;
 	uint32_t cid, next_cid;
 
@@ -789,24 +788,22 @@ _list_conns_vars_common_(uint8_t cmd, data_cb_object *cb_obj,
 	fam_id = cl->fam_id;
 	portid = mnl_socket_get_portid(nl);
 		
-	nlh = mnl_nlmsg_put_header(buf);
-	
-	nlh->nlmsg_type = fam_id;
-	nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
-	nlh->nlmsg_seq = seq = (seconds * 1000000 + microsecs);
-	genl = mnl_nlmsg_put_extra_header(nlh, sizeof(struct genlmsghdr));
-	
-	genl->cmd = cmd;
-
-	if (filter)
-		mnl_attr_put_u64(nlh, NLE_ATTR_TIMESTAMP, timestamp);
-
+	seq = (seconds * 1000000 + microsecs);
 	cid = 0;
 
-	header_len = nlh->nlmsg_len;
-
 	while (1) {
-		nlh->nlmsg_len = header_len;
+		nlh = mnl_nlmsg_put_header(buf);
+	
+		nlh->nlmsg_type = fam_id;
+		nlh->nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
+		nlh->nlmsg_seq = ++seq;
+		genl = mnl_nlmsg_put_extra_header(nlh, sizeof(struct genlmsghdr));
+	
+		genl->cmd = cmd;
+
+		if (filter)
+			mnl_attr_put_u64(nlh, NLE_ATTR_TIMESTAMP, timestamp);
+
 		cid_attr = mnl_attr_nest_start(nlh, NLE_ATTR_4TUPLE);
 		mnl_attr_put_u32(nlh, NEA_CID, cid);
 		mnl_attr_nest_end(nlh, cid_attr);
