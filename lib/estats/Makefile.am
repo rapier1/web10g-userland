@@ -52,7 +52,7 @@ AM_CPPFLAGS = @STRIP_BEGIN@ \
 AM_LDFLAGS = @STRIP_BEGIN@ \
 	$(LIBMNL_LIBS) \
 	-version-info $(LIBESTATS_LT_CURRENT):$(LIBESTATS_LT_REVISION):$(LIBESTATS_LT_AGE) \
-	-export-symbols-regex '^estats_.*' \
+	-export-symbols-regex '^estats_.*|^list_check' \
 	@STRIP_END@
 
 # Libraries to compile and install
