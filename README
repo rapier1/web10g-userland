@@ -4,7 +4,19 @@ Web10G-userland provides a library and tools for the Web10G project; cf.
 
 http://web10g.org
 
-For installation instructions, see INSTALL.
+NOTE - on some systems you may need to install the following packages:
+autotools-dev
+automake
+libtool
+pkg-config
+make
+g++
+gcc
+libmnl-dev
+
+also - before running 'configure', run 'autogen.sh'
+
+For further installation instructions, see INSTALL.
 
 This work is based on RFC 4898, a copy of which in included here in the file 
 rfc4898.txt The names of all instruments are included in the file 
