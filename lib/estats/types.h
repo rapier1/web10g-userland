@@ -204,16 +204,17 @@ struct estats_mask {
 
 extern struct estats_var estats_var_array[];
 
-typedef struct estats_connection	estats_connection;
-typedef struct estats_connection_vars	estats_connection_vars;
-typedef struct estats_connection_info	estats_connection_info;
-typedef struct estats_connection_list	estats_connection_list;
-typedef struct estats_val_data		estats_val_data;
-typedef struct estats_error		estats_error;
-typedef struct estats_nl_client		estats_nl_client;
-typedef struct estats_record		estats_record;
-typedef struct estats_timeval		estats_timeval;
-typedef struct estats_val		estats_val;
+typedef struct estats_connection		estats_connection;
+typedef struct estats_connection_vars		estats_connection_vars;
+typedef struct estats_connection_info		estats_connection_info;
+typedef struct estats_connection_list		estats_connection_list;
+typedef struct estats_connection_vars_list	estats_connection_vars_list;
+typedef struct estats_val_data			estats_val_data;
+typedef struct estats_error			estats_error;
+typedef struct estats_nl_client			estats_nl_client;
+typedef struct estats_record			estats_record;
+typedef struct estats_timeval			estats_timeval;
+typedef struct estats_val			estats_val;
 
 #define ARRAYSIZE(x) (sizeof(x) / sizeof(x[0]))
 

@@ -102,16 +102,16 @@ estats_connection_vars_list_free(struct estats_connection_vars_list** connection
 
 	list_for_each_safe(&((*connection_vars_list)->connection_vars_head), conn, tmp, list) {
 		list_del(&conn->list);
-		estats_connection_vars_free(conn);
+		estats_connection_vars_free(&conn);
 	}
 
-	list_for_each_safe(&((*connection_list)->connection_info_head), conni, tmpi, list) {
+	list_for_each_safe(&((*connection_vars_list)->connection_info_head), conni, tmpi, list) {
 		list_del(&conni->list);
 		free(conni);
 	}
 
-	free(*connection_list);
-	*connection_list = NULL;
+	free(*connection_vars_list);
+	*connection_vars_list = NULL;
 }
 
 struct estats_error*

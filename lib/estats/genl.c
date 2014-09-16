@@ -42,14 +42,14 @@ struct data_cb_object {
 	struct list_head *lh;
 	estats_add_from_globals_to_list	add_globals_to_list;
 	estats_get_last_cid		get_last_cid;
-}
+};
 typedef struct data_cb_object	data_cb_object;
 
 /* Methods for data_cb_object w/ estats_connection_list */
 /* add_from_globals_to_list for connection_list:
 	adds global data to new entry in list */
 static void
-add_globals_to_connection_list(list_head *lh) {
+add_globals_to_connection_list(struct list_head *lh) {
 	estats_connection* cp = NULL;
 
 	cp = malloc(sizeof(estats_connection));
@@ -72,7 +72,7 @@ add_globals_to_connection_list(list_head *lh) {
 /* get_last_cid for connection_list:
 	gets cid of last entry in list (returns -1 if list empty) */
 static int
-get_last_cid_from_connection_list(list_head *lh, uint32_t *cid) {
+get_last_cid_from_connection_list(struct list_head *lh, uint32_t *cid) {
 	estats_connection* conn;
 	conn = list_tail(lh, estats_connection, list);
 	if (!conn)
@@ -85,9 +85,10 @@ get_last_cid_from_connection_list(list_head *lh, uint32_t *cid) {
 /* add_from_globals_to_list for connection_vars_list:
 	adds global data to new entry in list */
 static void
-add_globals_to_connection_vars_list(list_head *lh) {
+add_globals_to_connection_vars_list(struct list_head *lh) {
 	estats_error *err = NULL;
 	estats_connection_vars *cp = NULL;
+	int k;
 
 	if (err = estats_connection_vars_new(&cp)) {
 		dbgprintf("No mem; malloc failed");
@@ -112,7 +113,7 @@ add_globals_to_connection_vars_list(list_head *lh) {
 /* get_last_cid for connection_vars_list:
 	gets cid of last entry in list (returns -1 if list empty) */
 static int
-get_last_cid_from_connection_vars_list(list_head *lh, uint32_t *cid) {
+get_last_cid_from_connection_vars_list(struct list_head *lh, uint32_t *cid) {
 	estats_connection_vars* conn;
 	conn = list_tail(lh, estats_connection_vars, list);
 	if (!conn)
@@ -682,7 +683,7 @@ static int timestamp_cb(const struct nlmsghdr *nlh, void *data)
 {
 	struct genlmsghdr *genl = mnl_nlmsg_get_payload(nlh);
 	if (genl->cmd != TCPE_CMD_TIMESTAMP)
-		return MNL_CB_ERR;
+		return MNL_CB_ERROR;
 	return mnl_attr_parse(nlh, sizeof(*genl), timestamp_attr_cb, data);
 }
 
