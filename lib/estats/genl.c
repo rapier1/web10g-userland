@@ -35,13 +35,14 @@ struct index_attr {
 /* data_cb_object method interface */
 /* adds global data to new entry in list */
 typedef void (*estats_add_from_globals_to_list)(struct list_head *);
-/* gets cid of last entry in list (returns -1 if list empty) */
-typedef int (*estats_get_last_cid)(struct list_head *, uint32_t */*cid*/);
+/* gets cid of next entry in list, i.e. one past last cid in list
+	 (returns -1 if list empty) */
+typedef int (*estats_get_next_cid)(struct list_head *, uint32_t */*cid*/);
 
 struct data_cb_object {
 	struct list_head *lh;
 	estats_add_from_globals_to_list	add_globals_to_list;
-	estats_get_last_cid		get_last_cid;
+	estats_get_next_cid		get_next_cid;
 };
 typedef struct data_cb_object	data_cb_object;
 
@@ -69,15 +70,16 @@ add_globals_to_connection_list(struct list_head *lh) {
 	list_add_tail(lh, &cp->list);
 }
 
-/* get_last_cid for connection_list:
-	gets cid of last entry in list (returns -1 if list empty) */
+/* get_next_cid for connection_list:
+	gets cid of next entry in list, i.e. one past last cid in list
+	 (returns -1 if list empty) */
 static int
-get_last_cid_from_connection_list(struct list_head *lh, uint32_t *cid) {
+get_next_cid_from_connection_list(struct list_head *lh, uint32_t *cid) {
 	estats_connection* conn;
 	conn = list_tail(lh, estats_connection, list);
 	if (!conn)
 		return -1;
-	*cid = conn->cid;
+	*cid = conn->cid+1;
 	return 0;
 }
 
@@ -110,15 +112,16 @@ add_globals_to_connection_vars_list(struct list_head *lh) {
 	list_add_tail(lh, &cp->list);
 }
 
-/* get_last_cid for connection_vars_list:
-	gets cid of last entry in list (returns -1 if list empty) */
+/* get_next_cid for connection_vars_list:
+	gets cid of next entry in list, i.e. one past last cid in list
+	 (returns -1 if list empty) */
 static int
-get_last_cid_from_connection_vars_list(struct list_head *lh, uint32_t *cid) {
+get_next_cid_from_connection_vars_list(struct list_head *lh, uint32_t *cid) {
 	estats_connection_vars* conn;
 	conn = list_tail(lh, estats_connection_vars, list);
 	if (!conn)
 		return -1;
-	*cid = conn->data->tuple.cid;
+	*cid = conn->data->tuple.cid+1;
 	return 0;
 }
 
@@ -768,7 +771,7 @@ _list_conns_vars_common_(uint8_t cmd, data_cb_object *cb_obj,
 	size_t seq, portid;
 	uint32_t header_len;
 	struct nlattr *cid_attr;
-	uint32_t cid, new_cid;
+	uint32_t cid, next_cid;
 
 	struct timeval time_s; 
 	time_t seconds;
@@ -780,7 +783,7 @@ _list_conns_vars_common_(uint8_t cmd, data_cb_object *cb_obj,
 
 	ErrIf(cb_obj == NULL || cb_obj->lh == NULL
 		|| cb_obj->add_globals_to_list == NULL
-		|| cb_obj->get_last_cid == NULL, ESTATS_ERR_INVAL);
+		|| cb_obj->get_next_cid == NULL, ESTATS_ERR_INVAL);
 	
 	nl = cl->mnl_sock;
 	fam_id = cl->fam_id;
@@ -821,11 +824,13 @@ _list_conns_vars_common_(uint8_t cmd, data_cb_object *cb_obj,
 			ret = mnl_socket_recvfrom(nl, buf, sizeof(buf));
 		}
 		Err2If(ret == -1, ESTATS_ERR_GENL, "error");
-		if (cb_obj->get_last_cid(cb_obj->lh, &new_cid) < 0)
+		if (cb_obj->get_next_cid(cb_obj->lh, &next_cid) < 0)
+			/* break if list is empty... */
 			break;
-		if (new_cid == cid)
+		if (next_cid == cid)
+			/* break if we got no new connections this time */
 			break;
-		cid = new_cid+1;
+		cid = next_cid;
 	}
 	
 Cleanup:
@@ -864,7 +869,7 @@ _list_conns_common(estats_connection_list* cli, bool filter, uint64_t timestamp,
 
 	cb_obj.lh = conn_head;
 	cb_obj.add_globals_to_list = add_globals_to_connection_list;
-	cb_obj.get_last_cid = get_last_cid_from_connection_list;
+	cb_obj.get_next_cid = get_next_cid_from_connection_list;
 
 	return _list_conns_vars_common_(TCPE_CMD_LIST_CONNS, &cb_obj,
 					filter, timestamp, cl);
@@ -939,7 +944,7 @@ _list_conns_vars_common(estats_connection_vars_list* cli, bool filter, uint64_t 
 
 	cb_obj.lh = conn_head;
 	cb_obj.add_globals_to_list = add_globals_to_connection_vars_list;
-	cb_obj.get_last_cid = get_last_cid_from_connection_vars_list;
+	cb_obj.get_next_cid = get_next_cid_from_connection_vars_list;
 
 	return _list_conns_vars_common_(TCPE_CMD_READ_ALL, &cb_obj,
 					filter, timestamp, cl);
