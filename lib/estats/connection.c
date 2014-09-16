@@ -75,6 +75,82 @@ estats_connection_list_free(struct estats_connection_list** connection_list)
 }
 
 struct estats_error*
+estats_connection_vars_list_new(struct estats_connection_vars_list** connection_vars_list)
+{
+	estats_error* err = NULL;
+
+	ErrIf(connection_vars_list == NULL, ESTATS_ERR_INVAL);
+	*connection_vars_list = NULL;
+
+	Chk(Malloc((void**) connection_vars_list, sizeof(estats_connection_vars_list)));
+	memset((void*) *connection_vars_list, 0, sizeof(estats_connection_vars_list));
+	list_head_init(&((*connection_vars_list)->connection_vars_head));
+	list_head_init(&((*connection_vars_list)->connection_info_head));
+
+ Cleanup:
+	return err;
+}
+
+void
+estats_connection_vars_list_free(struct estats_connection_vars_list** connection_vars_list)
+{
+	struct estats_connection_vars *conn, *tmp;
+	estats_connection_info *conni, *tmpi;
+
+	if (connection_vars_list == NULL || *connection_vars_list == NULL)
+		return;
+
+	list_for_each_safe(&((*connection_vars_list)->connection_vars_head), conn, tmp, list) {
+		list_del(&conn->list);
+		estats_connection_vars_free(conn);
+	}
+
+	list_for_each_safe(&((*connection_list)->connection_info_head), conni, tmpi, list) {
+		list_del(&conni->list);
+		free(conni);
+	}
+
+	free(*connection_list);
+	*connection_list = NULL;
+}
+
+struct estats_error*
+estats_connection_vars_new(struct estats_connection_vars** connection_vars)
+{
+	estats_error* err = NULL;
+	estats_val_data *data = NULL;
+
+	ErrIf(connection_vars == NULL, ESTATS_ERR_INVAL);
+
+	*connection_vars = NULL;
+
+	Chk(estats_val_data_new(&data));
+
+	Chk(Malloc((void**) connection_vars, sizeof(estats_connection_vars)));
+	memset((void*) *connection_vars, 0, sizeof(estats_connection_vars));
+
+	(*connection_vars)->data = data;
+
+	return err;
+
+ Cleanup:
+	if (data)
+		estats_val_data_free(&data);
+	return err;
+}
+
+void
+estats_connection_vars_free(struct estats_connection_vars** connection_vars)
+{
+	if (connection_vars == NULL || *connection_vars == NULL)
+		return;
+
+	estats_val_data_free(&(*connection_vars)->data);
+	free(*connection_vars);
+	*connection_vars = NULL;
+}
+
+struct estats_error*
 estats_connection_info_new(struct estats_connection_info** connection_info)
 {
 	estats_error* err = NULL;

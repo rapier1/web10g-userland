@@ -88,16 +88,6 @@ struct estats_connection_tuple {
 	int       cid;
 };
 
-struct estats_connection {
-	uint8_t   rem_addr[16];
-	uint8_t   local_addr[16];
-	uint16_t  rem_port;
-	uint16_t  local_port;
-	uint8_t   addr_type;
-	int       cid;
-	struct list_node  list;
-};
-
 struct estats_connection_tuple_ascii {
 	char rem_addr[INET6_ADDRSTRLEN];
 	char local_addr[INET6_ADDRSTRLEN];
@@ -109,7 +99,23 @@ struct estats_connection_tuple_ascii {
 
 #define ESTATS_CMDLINE_LEN_MAX 16
 
+struct estats_connection {
+	struct list_node  list;
+	uint8_t   rem_addr[16];
+	uint8_t   local_addr[16];
+	uint16_t  rem_port;
+	uint16_t  local_port;
+	uint8_t   addr_type;
+	int       cid;
+};
+
+struct estats_connection_vars {
+	struct list_node  list;
+	struct estats_val_data *data;
+};
+
 struct estats_connection_info {
+	struct list_node  list;
 	struct estats_connection_tuple  tuple;
 	char             cmdline[ESTATS_CMDLINE_LEN_MAX];
 	pid_t            pid;
@@ -117,11 +123,15 @@ struct estats_connection_info {
 	ino_t            ino;
 	int              state;
 	int		 cid;
-	struct list_node  list;
 };
 
 struct estats_connection_list {
 	struct list_head  connection_head;
+	struct list_head  connection_info_head;
+};
+
+struct estats_connection_vars_list {
+	struct list_head  connection_vars_head;
 	struct list_head  connection_info_head;
 };
 
@@ -157,6 +167,7 @@ struct estats_timeval {
 struct estats_val_data {
 	struct estats_connection_tuple tuple;
 	struct estats_timeval tv;
+	/* why is this here?? it doesn't appear to be used... */
 	struct estats_var_data *var_data;
 	int length;
 	struct estats_val val[0];
@@ -194,6 +205,7 @@ struct estats_mask {
 extern struct estats_var estats_var_array[];
 
 typedef struct estats_connection	estats_connection;
+typedef struct estats_connection_vars	estats_connection_vars;
 typedef struct estats_connection_info	estats_connection_info;
 typedef struct estats_connection_list	estats_connection_list;
 typedef struct estats_val_data		estats_val_data;
