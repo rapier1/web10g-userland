@@ -67,7 +67,7 @@ int main(int argc, char **argv)
 	struct estats_connection* cp;
 	struct estats_connection_tuple_ascii asc;
 
-	int cid, i; 
+	int cid, i, flag = 0; 
 	int opt;
 
 	char *strmask = NULL;
@@ -173,6 +173,19 @@ int main(int argc, char **argv)
 
 			if (strcmp(exclude_ip, asc.local_addr) == 0 || strcmp(exclude_ip, asc.rem_addr) == 0)
 				continue;
+
+			if (!flag) {
+				printf("Time, CID, SrcIp, SrcPort, DstIp, DstPort,");
+				for (i = 0; i < data->length; i++) {
+					if (data->val[i].masked)
+						continue;
+					printf("%s", estats_var_array[i].name);
+					if (i != data->length-1) 
+						printf(", ");
+				}
+				printf ("\n");
+				flag = 1;
+			}
 			
 			printf("%u.%06u,", data->tv.sec, data->tv.usec);
 			printf("%s,%s,%s,%s,%s,", asc.cid, asc.local_addr, asc.local_port, asc.rem_addr, asc.rem_port);
