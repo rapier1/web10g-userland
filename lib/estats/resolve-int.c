@@ -58,6 +58,9 @@ int resolve_genladdr(const char *name, struct estats_nl_client* cl)
 	struct mnl_socket *sock = cl->mnl_sock;
 	char buf[MNL_SOCKET_BUFFER_SIZE];
 
+	/* need to set buf as it might be used uninitialized in some contexts */
+	memset (buf, '\0', MNL_SOCKET_BUFFER_SIZE);
+
 	struct nlmsghdr *nlh;
 	struct genlmsghdr *genl;
 	int ret;
