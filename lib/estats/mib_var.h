@@ -1,4 +1,5 @@
 
+
 #ifndef ESTATS_MIB_VAR_H
 #define ESTATS_MIB_VAR_H
 extern int max_index[];
@@ -17,7 +18,7 @@ static inline int single_index(int inda, int indb)
 }
 
 typedef enum ESTATS_PERF_INDEX {
-	SEGSOUT                 = 0,
+        SEGSOUT                 = 0,
         DATASEGSOUT,
         DATAOCTETSOUT,
         HCDATAOCTETSOUT,
@@ -49,13 +50,13 @@ typedef enum ESTATS_PERF_INDEX {
         SNDLIMTRANSCWND,
         SNDLIMTRANSRWIN,
         SNDLIMTRANSSTARTUP,
-        SNDLIMTRANSTSODEFER,
         SNDLIMTRANSPACE,
+        SNDLIMTRANSTSODEFER,
         SNDLIMTIMESND,
         SNDLIMTIMECWND,
         SNDLIMTIMERWIN,
-        SNDLIMTIMESTARTUP,
         SNDLIMTIMETSODEFER,
+        SNDLIMTIMESTARTUP,
         SNDLIMTIMEPACE,
         __PERF_INDEX_MAX
 } ESTATS_PERF_INDEX;
@@ -159,7 +160,6 @@ typedef enum ESTATS_APP_INDEX {
 
 typedef enum ESTATS_TUNE_INDEX { 
         LIMCWND,
-        LIMSSTHRESH,
         LIMRWIN,
         LIMMSS,
         __TUNE_INDEX_MAX
@@ -167,8 +167,8 @@ typedef enum ESTATS_TUNE_INDEX {
 #define TUNE_INDEX_MAX __TUNE_INDEX_MAX
 
 typedef enum ESTATS_EXTRAS_INDEX {
-/*        OTHERREDUCTIONSCV,*/
         OTHERREDUCTIONSCM,
+	PRIORITY,
         __EXTRAS_INDEX_MAX
 } ESTATS_EXTRAS_INDEX;
 #define EXTRAS_INDEX_MAX __EXTRAS_INDEX_MAX

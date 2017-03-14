@@ -115,17 +115,17 @@ int main(int argc, char **argv)
 	for (j = 0; j < data->length; j++){
 
 		if (j == 0)
-			printf("\n\n Perf Table\n\n");
+			printf("\n\nPerf Table\n\n");
 		if (j == PERF_INDEX_MAX)
-			printf("\n\n Path Table\n\n");
+			printf("\n\nPath Table\n\n");
 		if (j == PERF_INDEX_MAX+PATH_INDEX_MAX)
-			printf("\n\n Stack Table\n\n");
+			printf("\n\nStack Table\n\n");
 		if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX)
-			printf("\n\n App Table\n\n");
+			printf("\n\nApp Table\n\n");
 		if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX+APP_INDEX_MAX)
-			printf("\n\n Tune Table\n\n");
+			printf("\n\nTune Table\n\n");
 		if (j == PERF_INDEX_MAX+PATH_INDEX_MAX+STACK_INDEX_MAX+APP_INDEX_MAX+TUNE_INDEX_MAX)
-			printf("\n\n Extras Table\n\n");
+			printf("\n\nExtras Table\n\n");
 
 
 		if (data->val[j].masked) continue;
