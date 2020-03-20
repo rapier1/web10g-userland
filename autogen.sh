@@ -24,3 +24,5 @@ done
 $LIBTOOLIZE --automake || exit 1
 
 automake --add-missing --include-deps --foreign || exit 1
+
+autoreconf -f -i
